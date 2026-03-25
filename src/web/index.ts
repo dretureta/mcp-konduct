@@ -12,58 +12,472 @@ app.use('*', cors());
 
 const CSS = `
 :root {
-  --bg: #1a1a2e;
-  --surface: #16213e;
-  --surface-hover: #1f2b47;
-  --primary: #00d4ff;
-  --primary-dim: #0099cc;
+  --bg: #0d0d0f;
+  --surface: #13131a;
+  --surface-hover: #1a1a24;
+  --primary: #7c3aed;
+  --primary-dim: #6d28d9;
+  --accent: #06b6d4;
   --success: #10b981;
-  --error: #ef4444;
-  --warning: #f59e0b;
-  --text: #ffffff;
-  --text-dim: #94a3b8;
-  --border: #2d3a52;
+  --error: #dc2626;
+  --warning: #d97706;
+  --text: #f5f5f5;
+  --text-dim: #9ca3af;
+  --border: #1f1f26;
 }
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
-a { color: var(--primary); text-decoration: none; }
-a:hover { text-decoration: underline; }
-.container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-header { background: var(--surface); padding: 15px 0; border-bottom: 1px solid var(--border); }
-header .container { display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
-.logo { font-size: 1.5rem; font-weight: bold; color: var(--primary); }
-nav { display: flex; gap: 20px; }
-nav a { color: var(--text-dim); }
-nav a:hover, nav a.active { color: var(--primary); }
-.card { background: var(--surface); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
-.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-.stat { background: var(--surface); padding: 20px; border-radius: 8px; text-align: center; }
-.stat-value { font-size: 2.5rem; font-weight: bold; color: var(--primary); }
-.stat-label { color: var(--text-dim); }
-table { width: 100%; border-collapse: collapse; }
-th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
-th { color: var(--text-dim); font-weight: 500; }
-tr:hover { background: var(--surface-hover); }
-.btn { display: inline-block; padding: 8px 16px; border-radius: 6px; font-size: 0.9rem; cursor: pointer; border: none; }
-.btn-primary { background: var(--primary); color: var(--bg); }
-.btn-primary:hover { background: var(--primary-dim); }
-.btn-danger { background: var(--error); color: white; }
-.btn-success { background: var(--success); color: white; }
-.btn-sm { padding: 4px 10px; font-size: 0.8rem; }
-.badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; }
-.badge-success { background: var(--success); }
-.badge-error { background: var(--error); }
-.badge-warning { background: var(--warning); }
-.form-group { margin-bottom: 15px; }
-.form-group label { display: block; margin-bottom: 5px; color: var(--text-dim); }
-.form-group input, .form-group select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
-.form-group input:focus { outline: none; border-color: var(--primary); }
-.actions { display: flex; gap: 10px; }
-.text-dim { color: var(--text-dim); }
-.text-success { color: var(--success); }
-.text-error { color: var(--error); }
-.page-title { margin-bottom: 20px; }
-.empty { text-align: center; padding: 40px; color: var(--text-dim); }
+
+body {
+  font-family: 'Segoe UI', 'Trebuchet MS', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.65;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+}
+
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 1.5rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+header .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2rem;
+}
+
+.logo {
+  font-family: 'Georgia', 'Garamond', serif;
+  font-size: 1.8rem;
+  font-weight: 400;
+  color: var(--primary);
+  letter-spacing: -0.02em;
+}
+
+nav {
+  display: flex;
+  gap: 2.5rem;
+}
+
+nav a {
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  position: relative;
+  font-weight: 500;
+}
+
+nav a::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--primary);
+  transition: width 0.3s ease;
+}
+
+nav a:hover::after,
+nav a.active::after {
+  width: 100%;
+}
+
+nav a:hover,
+nav a.active {
+  color: var(--primary);
+}
+
+main {
+  animation: subtle-fade 0.4s ease-out;
+}
+
+@keyframes subtle-fade {
+  from { opacity: 0.95; }
+  to { opacity: 1; }
+}
+
+.card {
+  background: var(--surface);
+  border-radius: 0.5rem;
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+  border-left: 4px solid var(--primary);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  border-left-color: var(--accent);
+}
+
+.divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  margin: 2rem 0;
+}
+
+h1, h2, h3 {
+  font-family: 'Georgia', 'Garamond', serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  margin-bottom: 1rem;
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+}
+
+h2 {
+  font-size: 1.8rem;
+}
+
+h3 {
+  font-size: 1.3rem;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.stat {
+  background: var(--surface);
+  padding: 2rem;
+  border-radius: 0.5rem;
+  border-left: 4px solid var(--primary);
+  transition: all 0.3s ease;
+}
+
+.stat:hover {
+  border-left-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.stat-value {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+thead {
+  border-bottom: 1px solid var(--border);
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+th, td {
+  padding: 1.2rem 1rem;
+  text-align: left;
+}
+
+tbody tr {
+  border-bottom: 1px solid rgba(31, 31, 38, 0.5);
+  transition: background-color 0.2s ease;
+}
+
+tbody tr:hover {
+  background: var(--surface-hover);
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.9rem 1.8rem;
+  border-radius: 0.375rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border: none;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  transition: left 0.4s ease;
+  z-index: 0;
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  position: relative;
+  z-index: 1;
+}
+
+.btn-primary:hover {
+  background: var(--primary-dim);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(124, 58, 237, 0.3);
+}
+
+.btn-danger {
+  background: var(--error);
+  color: white;
+  position: relative;
+  z-index: 1;
+}
+
+.btn-danger:hover {
+  background: #b91c1c;
+  transform: translateY(-2px);
+}
+
+.btn-success {
+  background: var(--success);
+  color: white;
+  position: relative;
+  z-index: 1;
+}
+
+.btn-success:hover {
+  background: #059669;
+  transform: translateY(-2px);
+}
+
+.btn-sm {
+  padding: 0.5rem 1.2rem;
+  font-size: 0.8rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.badge-success {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-error {
+  background: rgba(220, 38, 38, 0.15);
+  color: var(--error);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+.badge-warning {
+  background: rgba(217, 119, 6, 0.15);
+  color: var(--warning);
+  border: 1px solid rgba(217, 119, 6, 0.3);
+}
+
+.form-group {
+  margin-bottom: 2rem;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.8rem;
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+  color: var(--text);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 0.375rem;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+  background: var(--surface);
+}
+
+.form-help {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-top: 0.4rem;
+}
+
+.actions {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.text-dim {
+  color: var(--text-dim);
+}
+
+.text-success {
+  color: var(--success);
+}
+
+.text-error {
+  color: var(--error);
+}
+
+.page-title {
+  margin-bottom: 2rem;
+}
+
+.empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-dim);
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+.back-link:hover {
+  color: var(--primary);
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1.5rem 1rem;
+  }
+  
+  header .container {
+    padding: 0 1rem;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  nav {
+    gap: 1rem;
+  }
+  
+  nav a {
+    font-size: 0.7rem;
+    letter-spacing: 0;
+  }
+  
+  .stats {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+  }
+  
+  .stat-value {
+    font-size: 2rem;
+  }
+  
+  table {
+    font-size: 0.85rem;
+  }
+  
+  th, td {
+    padding: 0.8rem 0.5rem;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .actions {
+    width: 100%;
+  }
+  
+  .actions a,
+  .actions button {
+    flex: 1;
+    text-align: center;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
 `;
 
 function layout(title: string, content: string, nav: string = ''): string {
@@ -133,11 +547,13 @@ app.get('/dashboard', (c) => {
       <div class="stat"><div class="stat-value">${enabledTools.length}</div><div class="stat-label">Tools Enabled</div></div>
     </div>
     <div class="card">
-      <h2 style="margin-bottom: 15px;">Recent Activity</h2>
+      <h2>Recent Activity</h2>
+      <div class="divider"></div>
       ${logsHtml}
     </div>
     <div class="card">
-      <h2 style="margin-bottom: 15px;">Quick Actions</h2>
+      <h2>Quick Actions</h2>
+      <div class="divider"></div>
       <div class="actions">
         <a href="/servers/new" class="btn btn-primary">Add Server</a>
         <a href="/servers" class="btn">View All Servers</a>
@@ -160,6 +576,7 @@ app.get('/servers', (c) => {
       <td>
         <div class="actions">
           <a href="/servers/${server.id}" class="btn btn-sm">View</a>
+          <a href="/servers/${server.id}/edit" class="btn btn-sm">Edit</a>
           <form method="POST" action="/api/servers/${server.id}/toggle" style="display: inline;">
             <button type="submit" class="btn btn-sm ${server.enabled ? '' : 'btn-success'}">${server.enabled ? 'Disable' : 'Enable'}</button>
           </form>
@@ -173,7 +590,7 @@ app.get('/servers', (c) => {
     : `<div class="card"><table><thead><tr><th>Name</th><th>Transport</th><th>Status</th><th>Tools</th><th>Actions</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
   
   return c.html(layout('Servers', `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div class="page-header">
       <h1>Servers</h1>
       <a href="/servers/new" class="btn btn-primary">Add Server</a>
     </div>
@@ -183,35 +600,45 @@ app.get('/servers', (c) => {
 
 app.get('/servers/new', (c) => {
   const content = `
+    <a href="/servers" class="back-link">← Back to Servers</a>
     <h1 class="page-title">Add Server</h1>
     <div class="card">
       <form method="POST" action="/api/servers">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="name">Server Name</label>
+            <input type="text" id="name" name="name" required placeholder="e.g., filesystem, web-api">
+            <p class="form-help">A descriptive name for this server</p>
+          </div>
+          <div class="form-group">
+            <label for="transport">Transport Type</label>
+            <select id="transport" name="transport">
+              <option value="stdio">Standard I/O (stdio)</option>
+              <option value="sse">Server-Sent Events (SSE)</option>
+              <option value="streamable-http">Streamable HTTP</option>
+            </select>
+            <p class="form-help">How the server communicates</p>
+          </div>
+        </div>
+        <div class="divider"></div>
         <div class="form-group">
-          <label for="name">Name</label>
-          <input type="text" id="name" name="name" required placeholder="my-server">
+          <label for="command">Command <span class="text-dim">(for stdio)</span></label>
+          <input type="text" id="command" name="command" placeholder="e.g., npx">
+          <p class="form-help">The command to execute the server</p>
         </div>
         <div class="form-group">
-          <label for="transport">Transport</label>
-          <select id="transport" name="transport">
-            <option value="stdio">stdio</option>
-            <option value="sse">sse</option>
-            <option value="streamable-http">streamable-http</option>
-          </select>
+          <label for="args">Arguments <span class="text-dim">(comma-separated)</span></label>
+          <input type="text" id="args" name="args" placeholder="e.g., -y,@modelcontextprotocol/server-filesystem,/tmp">
+          <p class="form-help">Command line arguments for the server</p>
         </div>
+        <div class="divider"></div>
         <div class="form-group">
-          <label for="command">Command (for stdio)</label>
-          <input type="text" id="command" name="command" placeholder="npx">
-        </div>
-        <div class="form-group">
-          <label for="args">Arguments (comma-separated)</label>
-          <input type="text" id="args" name="args" placeholder="-y,@modelcontextprotocol/server-filesystem,/tmp">
-        </div>
-        <div class="form-group">
-          <label for="url">URL (for sse/http)</label>
-          <input type="text" id="url" name="url" placeholder="http://localhost:3000">
+          <label for="url">URL <span class="text-dim">(for SSE/HTTP)</span></label>
+          <input type="url" id="url" name="url" placeholder="http://localhost:3000">
+          <p class="form-help">Server endpoint URL</p>
         </div>
         <div class="actions">
-          <button type="submit" class="btn btn-primary">Add Server</button>
+          <button type="submit" class="btn btn-primary">Create Server</button>
           <a href="/servers" class="btn">Cancel</a>
         </div>
       </form>
@@ -225,7 +652,7 @@ app.get('/servers/:id', (c) => {
   const server = registry.getServer(id);
   
   if (!server) {
-    return c.html(layout('Not Found', '<div class="card"><p>Server not found</p></div>'));
+    return c.html(layout('Not Found', '<div class="card"><p class="text-error">Server not found</p></div>'));
   }
   
   const tools = registry.getServerTools(id);
@@ -241,12 +668,14 @@ app.get('/servers/:id', (c) => {
       </tbody></table>`;
 
   const content = `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-      <div><a href="/servers" class="text-dim">← Back to Servers</a><h1 style="margin-top: 10px;">${server.name}</h1></div>
+    <a href="/servers" class="back-link">← Back to Servers</a>
+    <div class="page-header">
+      <h1>${server.name}</h1>
       <form method="POST" action="/api/servers/${server.id}/discover"><button type="submit" class="btn btn-primary">Discover Tools</button></form>
     </div>
     <div class="card">
-      <h2 style="margin-bottom: 15px;">Server Details</h2>
+      <h2>Server Details</h2>
+      <div class="divider"></div>
       <table>
         <tr><th>ID</th><td class="text-dim">${server.id}</td></tr>
         <tr><th>Transport</th><td>${server.transport}</td></tr>
@@ -255,18 +684,78 @@ app.get('/servers/:id', (c) => {
         <tr><th>URL</th><td class="text-dim">${server.url || '-'}</td></tr>
         <tr><th>Status</th><td><span class="badge ${server.enabled ? 'badge-success' : 'badge-error'}">${server.enabled ? 'enabled' : 'disabled'}</span></td></tr>
       </table>
+      <div style="margin-top: 2rem;">
+        <a href="/servers/${server.id}/edit" class="btn btn-primary">Edit Server</a>
+      </div>
     </div>
     <div class="card">
-      <h2 style="margin-bottom: 15px;">Tools (${tools.filter(t => t.enabled).length}/${tools.length} enabled)</h2>
+      <h2>Tools (${tools.filter(t => t.enabled).length}/${tools.length} enabled)</h2>
+      <div class="divider"></div>
       ${toolsHtml}
     </div>
-    <div class="card">
-      <form method="POST" action="/api/servers/${server.id}/delete" onsubmit="return confirm('Are you sure?')">
+    <div class="card" style="border-left-color: var(--error);">
+      <form method="POST" action="/api/servers/${server.id}/delete" onsubmit="return confirm('Are you sure you want to delete this server?')">
         <button type="submit" class="btn btn-danger">Delete Server</button>
       </form>
     </div>`;
   
   return c.html(layout(server.name, content, 'servers'));
+});
+
+app.get('/servers/:id/edit', (c) => {
+  const id = c.req.param('id');
+  const server = registry.getServer(id);
+  
+  if (!server) {
+    return c.html(layout('Not Found', '<div class="card"><p class="text-error">Server not found</p></div>'));
+  }
+  
+  const content = `
+    <a href="/servers/${id}" class="back-link">← Back to Server</a>
+    <h1 class="page-title">Edit Server</h1>
+    <div class="card">
+      <form method="POST" action="/api/servers/${id}/update">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="name">Server Name</label>
+            <input type="text" id="name" name="name" required placeholder="e.g., filesystem" value="${server.name}">
+            <p class="form-help">A descriptive name for this server</p>
+          </div>
+          <div class="form-group">
+            <label for="transport">Transport Type</label>
+            <select id="transport" name="transport">
+              <option value="stdio" ${server.transport === 'stdio' ? 'selected' : ''}>Standard I/O (stdio)</option>
+              <option value="sse" ${server.transport === 'sse' ? 'selected' : ''}>Server-Sent Events (SSE)</option>
+              <option value="streamable-http" ${server.transport === 'streamable-http' ? 'selected' : ''}>Streamable HTTP</option>
+            </select>
+            <p class="form-help">How the server communicates</p>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="form-group">
+          <label for="command">Command <span class="text-dim">(for stdio)</span></label>
+          <input type="text" id="command" name="command" placeholder="e.g., npx" value="${server.command || ''}">
+          <p class="form-help">The command to execute the server</p>
+        </div>
+        <div class="form-group">
+          <label for="args">Arguments <span class="text-dim">(comma-separated)</span></label>
+          <input type="text" id="args" name="args" placeholder="e.g., -y,@modelcontextprotocol/server-filesystem,/tmp" value="${server.args ? server.args.join(',') : ''}">
+          <p class="form-help">Command line arguments for the server</p>
+        </div>
+        <div class="divider"></div>
+        <div class="form-group">
+          <label for="url">URL <span class="text-dim">(for SSE/HTTP)</span></label>
+          <input type="url" id="url" name="url" placeholder="http://localhost:3000" value="${server.url || ''}">
+          <p class="form-help">Server endpoint URL</p>
+        </div>
+        <div class="actions">
+          <button type="submit" class="btn btn-primary">Update Server</button>
+          <a href="/servers/${id}" class="btn">Cancel</a>
+        </div>
+      </form>
+    </div>`;
+  
+  return c.html(layout(`Edit ${server.name}`, content, 'servers'));
 });
 
 app.get('/tools', (c) => {
@@ -298,7 +787,7 @@ app.get('/projects', (c) => {
       const rows = db.prepare('SELECT * FROM project_servers WHERE project_id = ?').all(project.id) as Record<string, unknown>[];
       const count = rows.length;
       return `<div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <div class="page-header">
           <h2>${project.name}</h2>
           <form method="POST" action="/api/projects/${project.id}/delete" style="display: inline;"><button type="submit" class="btn btn-sm btn-danger">Delete</button></form>
         </div>
@@ -308,10 +797,10 @@ app.get('/projects', (c) => {
     }).join('');
 
   const content = `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div class="page-header">
       <h1>Projects</h1>
       <form method="POST" action="/api/projects" style="display: flex; gap: 10px;">
-        <input type="text" name="name" placeholder="Project name" required style="padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
+        <input type="text" name="name" placeholder="Project name" required style="padding: 0.9rem 1.8rem; border-radius: 0.375rem; border: 1px solid var(--border); background: var(--bg); color: var(--text); min-width: 250px;">
         <button type="submit" class="btn btn-primary">Create</button>
       </form>
     </div>
@@ -349,15 +838,15 @@ app.get('/logs', (c) => {
 
   const content = `
     <h1 class="page-title">Request Logs</h1>
-    <div class="card" style="margin-bottom: 20px;">
+    <div class="card">
       <form method="GET" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-        <label class="text-dim">Filter:</label>
-        <select name="server" style="padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
+        <label class="text-dim" style="font-weight: 600;">Filter:</label>
+        <select name="server" style="padding: 0.9rem 1.8rem; border-radius: 0.375rem; border: 1px solid var(--border); background: var(--bg); color: var(--text); min-width: 200px;">
           <option value="">All servers</option>
           ${servers.map(s => `<option value="${s.id}" ${serverFilter === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
         </select>
-        <label style="display: flex; align-items: center; gap: 5px;">
-          <input type="checkbox" name="error" ${errorFilter ? 'checked' : ''}> Errors only
+        <label style="display: flex; align-items: center; gap: 8px; color: var(--text-dim); cursor: pointer;">
+          <input type="checkbox" name="error" ${errorFilter ? 'checked' : ''} style="cursor: pointer;"> Errors only
         </label>
         <button type="submit" class="btn btn-sm btn-primary">Apply</button>
       </form>
@@ -385,6 +874,40 @@ app.post('/api/servers', async (c) => {
     return c.redirect(`/servers/${id}`);
   } catch (err) {
     return c.html(layout('Error', `<div class="card"><p class="text-error">${err instanceof Error ? err.message : String(err)}</p></div>`));
+  }
+});
+
+app.post('/api/servers/:id/update', async (c) => {
+  const id = c.req.param('id');
+  const server = registry.getServer(id);
+  
+  if (!server) {
+    return c.html(layout('Not Found', '<div class="card"><p class="text-error">Server not found</p></div>'));
+  }
+  
+  const formData = await c.req.parseBody();
+  const args = formData.args ? String(formData.args).split(',').map(s => s.trim()) : undefined;
+  const url = formData.url ? String(formData.url) : undefined;
+  
+  try {
+    const stmt = db.prepare(`
+      UPDATE servers 
+      SET name = ?, transport = ?, command = ?, args = ?, url = ?
+      WHERE id = ?
+    `);
+    
+    stmt.run(
+      String(formData.name),
+      String(formData.transport),
+      formData.command ? String(formData.command) : null,
+      args ? JSON.stringify(args) : null,
+      url || null,
+      id
+    );
+    
+    return c.redirect(`/servers/${id}`);
+  } catch (err) {
+    return c.html(layout('Error', `<div class="card"><p class="text-error">Update failed: ${err instanceof Error ? err.message : String(err)}</p></div>`));
   }
 });
 
