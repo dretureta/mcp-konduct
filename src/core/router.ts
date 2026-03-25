@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { registry } from './registry.js';
 import { aggregator } from './aggregator.js';
 import { connectionPool } from './proxy.js';
-import type { ToolDefinition } from 'types/index.js';
+import type { ToolDefinition } from '../types/index.js';
 
 export class KonductRouter {
   private server: McpServer;

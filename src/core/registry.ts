@@ -1,8 +1,8 @@
 import { randomUUID } from 'crypto';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { db } from 'config/db.js';
-import type { ServerConfig, ToolConfig } from 'types/index.js';
+import { db } from '../config/db.js';
+import type { ServerConfig, ToolConfig } from '../types/index.js';
 
 export class ServerRegistry {
   addServer(config: Omit<ServerConfig, 'id' | 'createdAt' | 'updatedAt'>): string {

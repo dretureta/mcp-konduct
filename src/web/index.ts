@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import { registry } from 'core/registry.js';
-import { getDbPath } from 'config/db.js';
-import { db } from 'config/db.js';
+import { registry } from '../core/registry.js';
+import { getDbPath } from '../config/db.js';
+import { db } from '../config/db.js';
 
 const app = new Hono();
 

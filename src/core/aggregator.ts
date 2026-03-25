@@ -1,4 +1,4 @@
-import type { ServerConfig, ToolConfig, ToolDefinition, ToolIndexEntry } from 'types/index.js';
+import type { ServerConfig, ToolConfig, ToolDefinition, ToolIndexEntry } from '../types/index.js';
 import { registry } from './registry.js';
 
 export class Aggregator {

@@ -3,9 +3,9 @@
 import { Command } from 'commander';
 import { join } from 'path';
 import { homedir } from 'os';
-import { registry } from 'core/registry.js';
-import { router } from 'core/router.js';
-import { getDbPath, db } from 'config/db.js';
+import { registry } from '../core/registry.js';
+import { router } from '../core/router.js';
+import { getDbPath, db } from '../config/db.js';
 import { success, error, warn, info, json, table } from './format.js';
 
 const program = new Command();

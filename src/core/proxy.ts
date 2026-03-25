@@ -1,8 +1,8 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import type { ToolIndexEntry } from 'types/index.js';
+import type { ToolIndexEntry } from '../types/index.js';
 import { registry } from './registry.js';
-import { db } from 'config/db.js';
+import { db } from '../config/db.js';
 
 interface Connection {
   client: Client;
