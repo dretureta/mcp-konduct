@@ -9,6 +9,7 @@ import type { ToolDefinition } from 'types/index.js';
 export class KonductRouter {
   private server: McpServer;
   private toolDefinitions: ToolDefinition[] = [];
+  private transport: StdioServerTransport | null = null;
 
   constructor() {
     this.server = new McpServer({
@@ -19,35 +20,43 @@ export class KonductRouter {
         tools: {}
       }
     });
+
+    process.stdin.on('close', () => {
+      this.shutdown().catch(console.error);
+    });
   }
 
   async initialize(): Promise<void> {
-    const enabledServers = registry.listServers().filter(s => s.enabled);
-    const allTools = registry.listAllTools();
+    try {
+      const enabledServers = registry.listServers().filter(s => s.enabled);
+      const allTools = registry.listAllTools();
 
-    const tools = aggregator.aggregateTools(enabledServers, allTools);
-    this.toolDefinitions = tools;
+      const tools = aggregator.aggregateTools(enabledServers, allTools);
+      this.toolDefinitions = tools;
 
-    const toolIndex = aggregator.getToolMapping();
-    connectionPool.setToolIndex(toolIndex);
+      const toolIndex = aggregator.getToolMapping();
+      connectionPool.setToolIndex(toolIndex);
 
-    for (const tool of tools) {
-      this.server.registerTool(
-        tool.name,
-        {
-          title: tool.name,
-          description: tool.description || ''
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        async (params: any) => {
-          try {
-            const result = await connectionPool.callTool(tool.name, params);
-            return result as any;
-          } catch (error) {
-            return { content: [{ type: 'text' as const, text: `Error: ${error instanceof Error ? error.message : String(error)}` }], isError: true };
+      for (const tool of tools) {
+        this.server.registerTool(
+          tool.name,
+          {
+            title: tool.name,
+            description: tool.description || ''
+          },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          async (params: any) => {
+            try {
+              const result = await connectionPool.callTool(tool.name, params);
+              return result as any;
+            } catch (error) {
+              return { content: [{ type: 'text' as const, text: `Error: ${error instanceof Error ? error.message : String(error)}` }], isError: true };
+            }
           }
-        }
-      );
+        );
+      }
+    } catch (error) {
+      console.error('[Router] Initialization error:', error);
     }
   }
 
@@ -55,8 +64,8 @@ export class KonductRouter {
     await this.initialize();
     connectionPool.startCleanup();
 
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
+    this.transport = new StdioServerTransport();
+    await this.server.connect(this.transport);
   }
 
   async refresh(): Promise<void> {
@@ -64,9 +73,16 @@ export class KonductRouter {
   }
 
   async shutdown(): Promise<void> {
-    connectionPool.stopCleanup();
-    await connectionPool.disconnectAll();
-    await this.server.close();
+    try {
+      connectionPool.stopCleanup();
+      await connectionPool.disconnectAll();
+      if (this.transport) {
+        await this.transport.close();
+      }
+      await this.server.close();
+    } catch (error) {
+      console.error('[Router] Shutdown error:', error);
+    }
   }
 
   getToolDefinitions(): ToolDefinition[] {

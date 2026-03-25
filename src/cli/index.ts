@@ -410,7 +410,7 @@ program
         });
         info(`Dashboard running at http://localhost:${port}`);
       } else {
-        info('Starting MCP router...');
+        console.error('Starting MCP router...');
         await router.start();
       }
     } catch (err) {
