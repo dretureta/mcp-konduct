@@ -23,7 +23,7 @@ export class ConnectionPool {
     this.toolIndex = index;
   }
 
-  async callTool(name: string, args: Record<string, unknown>): Promise<{ content: Array<{ type: string; text: string }> }> {
+  async callTool(name: string, args: Record<string, unknown>): Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }> {
     const mapping = this.toolIndex.get(name);
     if (!mapping) {
       throw new Error(`Tool not found: ${name}`);
@@ -41,15 +41,18 @@ export class ConnectionPool {
         new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Tool call timeout')), this.timeout)
         )
-      ]) as { content: Array<{ type: string; text: string }> };
+      ]);
 
       this.logRequest(mapping.serverId, name, Date.now() - startTime, true);
-      return result;
+      return result as { content: Array<{ type: string; text: string }>; isError?: boolean };
     } catch (error) {
       const duration = Date.now() - startTime;
       const message = error instanceof Error ? error.message : String(error);
       this.logRequest(mapping.serverId, name, duration, false, message);
-      throw error;
+      return {
+        content: [{ type: 'text', text: `Error: ${message}` }],
+        isError: true
+      };
     }
   }
 

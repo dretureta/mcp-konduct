@@ -14,6 +14,10 @@ export class KonductRouter {
     this.server = new McpServer({
       name: 'mcp-konduct',
       version: '1.0.0'
+    }, {
+      capabilities: {
+        tools: {}
+      }
     });
   }
 
@@ -32,14 +36,16 @@ export class KonductRouter {
         tool.name,
         {
           title: tool.name,
-          description: tool.description || '',
-          inputSchema: tool.inputSchema as z.ZodType<object>,
-          outputSchema: tool.outputSchema as z.ZodType<object> | undefined
+          description: tool.description || ''
         },
-        async (params): Promise<{ content: Array<{ type: 'text'; text: string }> }> => {
-          const args = params as Record<string, unknown>;
-          const result = await connectionPool.callTool(tool.name, args);
-          return result as { content: Array<{ type: 'text'; text: string }> };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        async (params: any) => {
+          try {
+            const result = await connectionPool.callTool(tool.name, params);
+            return result as any;
+          } catch (error) {
+            return { content: [{ type: 'text' as const, text: `Error: ${error instanceof Error ? error.message : String(error)}` }], isError: true };
+          }
         }
       );
     }
