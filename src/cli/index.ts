@@ -3,6 +3,8 @@
 import { Command } from 'commander';
 import { join } from 'path';
 import { homedir } from 'os';
+import { existsSync } from 'fs';
+import { execSync } from 'child_process';
 import { registry } from '../core/registry.js';
 import { router } from '../core/router.js';
 import { getDbPath, db } from '../config/db.js';
@@ -502,6 +504,99 @@ program
       ]);
 
       console.log(table(headers, logRows));
+    } catch (err) {
+      error(err instanceof Error ? err.message : String(err));
+      process.exit(1);
+    }
+  });
+
+program
+  .command('doctor')
+  .description('Run health checks for Konduct setup')
+  .action(() => {
+    try {
+      const checks: Array<{ name: string; ok: boolean; details: string }> = [];
+
+      const dbPath = getDbPath();
+      checks.push({
+        name: 'Database file',
+        ok: existsSync(dbPath),
+        details: dbPath
+      });
+
+      let dbOk = true;
+      try {
+        db.prepare('SELECT 1').get();
+      } catch {
+        dbOk = false;
+      }
+      checks.push({
+        name: 'Database query',
+        ok: dbOk,
+        details: dbOk ? 'ok' : 'failed'
+      });
+
+      const servers = registry.listServers();
+      const enabledServers = servers.filter(s => s.enabled);
+      checks.push({
+        name: 'Configured servers',
+        ok: enabledServers.length > 0,
+        details: `${enabledServers.length}/${servers.length} enabled`
+      });
+
+      const tools = registry.listAllTools();
+      const enabledTools = tools.filter(t => t.enabled);
+      checks.push({
+        name: 'Discovered tools',
+        ok: enabledTools.length > 0,
+        details: `${enabledTools.length}/${tools.length} enabled`
+      });
+
+      let outdatedRaw = '{}';
+      try {
+        outdatedRaw = execSync('npm outdated --json', {
+          stdio: ['ignore', 'pipe', 'pipe']
+        }).toString() || '{}';
+      } catch (cmdErr) {
+        const err = cmdErr as { stdout?: Buffer };
+        outdatedRaw = err.stdout?.toString() || '{}';
+      }
+
+      let outdatedCount = 0;
+      try {
+        const outdated = JSON.parse(outdatedRaw || '{}') as Record<string, unknown>;
+        outdatedCount = Object.keys(outdated).length;
+      } catch {
+        outdatedCount = -1;
+      }
+
+      checks.push({
+        name: 'Dependencies',
+        ok: outdatedCount === 0,
+        details: outdatedCount < 0 ? 'could not parse npm outdated output' : `${outdatedCount} outdated`
+      });
+
+      const nodeMajor = parseInt(process.versions.node.split('.')[0], 10);
+      checks.push({
+        name: 'Node version',
+        ok: nodeMajor >= 18,
+        details: `v${process.versions.node}`
+      });
+
+      for (const check of checks) {
+        if (check.ok) {
+          success(`${check.name}: ${check.details}`);
+        } else {
+          warn(`${check.name}: ${check.details}`);
+        }
+      }
+
+      const failed = checks.filter(c => !c.ok);
+      if (failed.length === 0) {
+        success('Doctor completed: all checks passed');
+      } else {
+        warn(`Doctor completed: ${failed.length} check(s) need attention`);
+      }
     } catch (err) {
       error(err instanceof Error ? err.message : String(err));
       process.exit(1);
