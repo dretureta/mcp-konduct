@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
+import { join } from 'path';
+import { homedir } from 'os';
 import { registry } from 'core/registry.js';
 import { router } from 'core/router.js';
 import { getDbPath, db } from 'config/db.js';
@@ -283,10 +285,11 @@ projectCmd
 
 program
   .command('connect')
-  .description('Generate client configuration')
-  .argument('<client>', 'Client type (claude|cursor|cline|custom)')
+  .description('Generate or install client configuration')
+  .argument('<client>', 'Client type (claude|cursor|cline|opencode|vscode|custom)')
   .option('-p, --project <id>', 'Project ID')
-  .action((client, opts) => {
+  .option('-i, --install', 'Install configuration directly')
+  .action(async (client, opts) => {
     try {
       const configPath = process.execPath;
       const scriptPath = process.argv[1];
@@ -297,22 +300,84 @@ program
         env: {}
       };
 
+      const opencodeConfig = {
+        type: 'local' as const,
+        command: [configPath, scriptPath, 'start'],
+        enabled: true
+      };
+
+      const installConfig = async (config: unknown, configPath: string) => {
+        const fs = await import('fs');
+        let existing: Record<string, unknown> = {};
+        
+        if (fs.existsSync(configPath)) {
+          const content = fs.readFileSync(configPath, 'utf-8');
+          try {
+            existing = JSON.parse(content);
+          } catch (e) {
+            warn(`Failed to parse ${configPath}, starting fresh`);
+            existing = {};
+          }
+        }
+
+        if (configPath.includes('opencode')) {
+          const existingMcp = ((existing as Record<string, unknown>).mcp as Record<string, unknown>) || {};
+          const mcpEntry = (config as { mcp: Record<string, unknown> }).mcp;
+          existing = { ...existing, mcp: { ...existingMcp, ...mcpEntry } };
+        } else {
+          const existingMcpServers = ((existing as Record<string, unknown>).mcpServers as Record<string, unknown>) || {};
+          const mcpServersEntry = (config as { mcpServers: Record<string, unknown> }).mcpServers;
+          existing = { ...existing, mcpServers: { ...existingMcpServers, ...mcpServersEntry } };
+        }
+
+        fs.writeFileSync(configPath, JSON.stringify(existing, null, 2));
+      };
+
       switch (client.toLowerCase()) {
         case 'claude':
-          info('Claude Desktop configuration:');
-          console.log(JSON.stringify({ mcpServers: { 'mcp-konduct': mcpConfig } }, null, 2));
-          info('Add this to your claude_desktop_config.json');
+          const claudeConfig = { mcpServers: { 'mcp-konduct': mcpConfig } };
+          if (opts.install) {
+            const claudePath = process.platform === 'win32' 
+              ? join(process.env.APPDATA || '', 'Claude', 'mcp_settings.json')
+              : join(homedir(), '.config', 'Claude', 'mcp_settings.json');
+            await installConfig(claudeConfig, claudePath);
+            success(`Installed to ${claudePath}`);
+          } else {
+            info('Claude Desktop configuration:');
+            console.log(JSON.stringify(claudeConfig, null, 2));
+            info('Add this to your claude_desktop_config.json or use --install');
+          }
           break;
         case 'cursor':
-          info('Cursor configuration:');
+          const cursorConfig = { mcpServers: { 'mcp-konduct': mcpConfig } };
+          if (opts.install) {
+            const cursorPath = join(homedir(), '.cursor', 'mcp.json');
+            await installConfig(cursorConfig, cursorPath);
+            success(`Installed to ${cursorPath}`);
+          } else {
+            info('Cursor configuration:');
+            console.log(JSON.stringify(cursorConfig, null, 2));
+            info('Add this to .cursor/mcp.json or use --install');
+          }
+          break;
+        case 'opencode':
+          const opencodeJsonConfig = { mcp: { 'mcp-konduct': opencodeConfig } };
+          if (opts.install) {
+            const opencodePath = join(homedir(), '.config', 'opencode', 'opencode.jsonc');
+            await installConfig(opencodeJsonConfig, opencodePath);
+            success(`Installed to ${opencodePath}`);
+          } else {
+            info('OpenCode configuration:');
+            console.log(JSON.stringify(opencodeJsonConfig, null, 2));
+            info('Add this to ~/.config/opencode/opencode.jsonc under "mcp" key or use --install');
+          }
+          break;
+        case 'vscode':
+          info('VSCode MCP extension:');
           console.log(JSON.stringify({ mcpServers: { 'mcp-konduct': mcpConfig } }, null, 2));
-          info('Add this to .cursor/mcp.json');
+          info('Install via VSCode MCP extension settings');
           break;
         case 'cline':
-          info('Cline configuration:');
-          console.log(JSON.stringify({ mcpServers: { 'mcp-konduct': mcpConfig } }, null, 2));
-          info('Add this to your cline_mcp_settings.json');
-          break;
         case 'custom':
         default:
           info('Generic MCP configuration:');
