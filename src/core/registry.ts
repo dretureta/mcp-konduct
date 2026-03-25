@@ -1,0 +1,262 @@
+import { randomUUID } from 'crypto';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { db } from 'config/db.js';
+import type { ServerConfig, ToolConfig } from 'types/index.js';
+
+export class ServerRegistry {
+  addServer(config: Omit<ServerConfig, 'id' | 'createdAt' | 'updatedAt'>): string {
+    const id = randomUUID();
+
+    const existing = db.prepare('SELECT id FROM servers WHERE name = ?').get(config.name);
+    if (existing) {
+      throw new Error(`Server with name '${config.name}' already exists`);
+    }
+
+    db.prepare(`
+      INSERT INTO servers (id, name, transport, command, args, env, url, enabled)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      id,
+      config.name,
+      config.transport,
+      config.command ?? null,
+      config.args ? JSON.stringify(config.args) : null,
+      config.env ? JSON.stringify(config.env) : null,
+      config.url ?? null,
+      config.enabled ? 1 : 0
+    );
+
+    return id;
+  }
+
+  removeServer(id: string): boolean {
+    const result = db.prepare('DELETE FROM servers WHERE id = ?').run(id);
+    return result.changes > 0;
+  }
+
+  listServers(projectId?: string): ServerConfig[] {
+    let rows;
+    if (projectId) {
+      rows = db.prepare(`
+        SELECT s.* FROM servers s
+        JOIN project_servers ps ON s.id = ps.server_id
+        WHERE ps.project_id = ?
+        ORDER BY s.name
+      `).all(projectId) as Record<string, unknown>[];
+    } else {
+      rows = db.prepare('SELECT * FROM servers ORDER BY name').all() as Record<string, unknown>[];
+    }
+
+    return rows.map(this.mapServerRow);
+  }
+
+  getServer(id: string): ServerConfig | null {
+    const row = db.prepare('SELECT * FROM servers WHERE id = ?').get(id) as Record<string, unknown> | undefined;
+    return row ? this.mapServerRow(row) : null;
+  }
+
+  updateServer(id: string, partial: Partial<ServerConfig>): void {
+    const updates: string[] = [];
+    const values: unknown[] = [];
+
+    if (partial.name !== undefined) {
+      updates.push('name = ?');
+      values.push(partial.name);
+    }
+    if (partial.transport !== undefined) {
+      updates.push('transport = ?');
+      values.push(partial.transport);
+    }
+    if (partial.command !== undefined) {
+      updates.push('command = ?');
+      values.push(partial.command ?? null);
+    }
+    if (partial.args !== undefined) {
+      updates.push('args = ?');
+      values.push(JSON.stringify(partial.args) ?? null);
+    }
+    if (partial.env !== undefined) {
+      updates.push('env = ?');
+      values.push(JSON.stringify(partial.env) ?? null);
+    }
+    if (partial.url !== undefined) {
+      updates.push('url = ?');
+      values.push(partial.url ?? null);
+    }
+    if (partial.enabled !== undefined) {
+      updates.push('enabled = ?');
+      values.push(partial.enabled ? 1 : 0);
+    }
+
+    if (updates.length === 0) return;
+
+    updates.push("updated_at = datetime('now')");
+    values.push(id);
+
+    db.prepare(`UPDATE servers SET ${updates.join(', ')} WHERE id = ?`).run(...values);
+  }
+
+  enableServer(id: string): void {
+    db.prepare('UPDATE servers SET enabled = 1, updated_at = datetime("now") WHERE id = ?').run(id);
+  }
+
+  disableServer(id: string): void {
+    db.prepare('UPDATE servers SET enabled = 0, updated_at = datetime("now") WHERE id = ?').run(id);
+  }
+
+  getServerTools(serverId: string): ToolConfig[] {
+    const rows = db.prepare('SELECT * FROM tools WHERE server_id = ?').all(serverId) as Record<string, unknown>[];
+    return rows.map(row => ({
+      id: row.id as string,
+      serverId: row.server_id as string,
+      toolName: row.tool_name as string,
+      enabled: (row.enabled as number) === 1,
+      discoveredAt: row.discovered_at as string
+    }));
+  }
+
+  listAllTools(): ToolConfig[] {
+    const rows = db.prepare('SELECT * FROM tools ORDER BY server_id, tool_name').all() as Record<string, unknown>[];
+    return rows.map(row => ({
+      id: row.id as string,
+      serverId: row.server_id as string,
+      toolName: row.tool_name as string,
+      enabled: (row.enabled as number) === 1,
+      discoveredAt: row.discovered_at as string
+    }));
+  }
+
+  addTool(serverId: string, toolName: string): void {
+    const id = `${serverId}__${toolName}`;
+    db.prepare(`
+      INSERT OR IGNORE INTO tools (id, server_id, tool_name, enabled)
+      VALUES (?, ?, ?, 1)
+    `).run(id, serverId, toolName);
+  }
+
+  removeTool(id: string): boolean {
+    const result = db.prepare('DELETE FROM tools WHERE id = ?').run(id);
+    return result.changes > 0;
+  }
+
+  enableTool(id: string): void {
+    db.prepare('UPDATE tools SET enabled = 1 WHERE id = ?').run(id);
+  }
+
+  disableTool(id: string): void {
+    db.prepare('UPDATE tools SET enabled = 0 WHERE id = ?').run(id);
+  }
+
+  cleanTools(serverId: string, activeToolNames: string[]): void {
+    if (activeToolNames.length === 0) {
+      db.prepare('DELETE FROM tools WHERE server_id = ?').run(serverId);
+      return;
+    }
+    const placeholders = activeToolNames.map(() => '?').join(',');
+    db.prepare(`DELETE FROM tools WHERE server_id = ? AND tool_name NOT IN (${placeholders})`).run(serverId, ...activeToolNames);
+  }
+
+  async discoverTools(serverId: string): Promise<string[]> {
+    const server = this.getServer(serverId);
+    if (!server) {
+      throw new Error(`Server not found: ${serverId}`);
+    }
+
+    if (server.transport !== 'stdio') {
+      throw new Error(`Discovery only supports stdio transport for now`);
+    }
+
+    if (!server.command) {
+      throw new Error(`No command specified for server: ${server.name}`);
+    }
+
+    const args = server.args || [];
+    const env: Record<string, string> = { ...process.env as Record<string, string>, ...server.env };
+
+    const transport = new StdioClientTransport({
+      command: server.command,
+      args,
+      env
+    });
+
+    const client = new Client({
+      name: `konduct-discovery-${server.name}`,
+      version: '1.0.0'
+    }, {
+      capabilities: {}
+    });
+
+    try {
+      await client.connect(transport);
+      const toolsResponse = await client.listTools() as { tools: Array<{ name: string }> };
+      
+      const toolNames = toolsResponse.tools.map((t) => t.name);
+      
+      for (const toolName of toolNames) {
+        this.addTool(serverId, toolName);
+      }
+
+      this.cleanTools(serverId, toolNames);
+
+      await client.close();
+      return toolNames;
+    } catch (err) {
+      await client.close().catch(() => {});
+      throw err;
+    }
+  }
+
+  private mapServerRow(row: Record<string, unknown>): ServerConfig {
+    return {
+      id: row.id as string,
+      name: row.name as string,
+      transport: row.transport as ServerConfig['transport'],
+      command: row.command as string | undefined,
+      args: row.args ? JSON.parse(row.args as string) : undefined,
+      env: row.env ? JSON.parse(row.env as string) : undefined,
+      url: row.url as string | undefined,
+      enabled: (row.enabled as number) === 1,
+      createdAt: row.created_at as string,
+      updatedAt: row.updated_at as string
+    };
+  }
+
+  createProject(name: string, description?: string): string {
+    const id = randomUUID();
+    db.prepare(`
+      INSERT INTO projects (id, name, description)
+      VALUES (?, ?, ?)
+    `).run(id, name, description || null);
+    return id;
+  }
+
+  deleteProject(id: string): boolean {
+    const result = db.prepare('DELETE FROM projects WHERE id = ?').run(id);
+    return result.changes > 0;
+  }
+
+  listProjects(): Array<{ id: string; name: string; description?: string; createdAt?: string }> {
+    const rows = db.prepare('SELECT * FROM projects ORDER BY name').all() as Record<string, unknown>[];
+    return rows.map(row => ({
+      id: row.id as string,
+      name: row.name as string,
+      description: row.description as string | undefined,
+      createdAt: row.created_at as string
+    }));
+  }
+
+  addServerToProject(projectId: string, serverId: string): void {
+    db.prepare(`
+      INSERT OR IGNORE INTO project_servers (project_id, server_id)
+      VALUES (?, ?)
+    `).run(projectId, serverId);
+  }
+
+  removeServerFromProject(projectId: string, serverId: string): boolean {
+    const result = db.prepare('DELETE FROM project_servers WHERE project_id = ? AND server_id = ?').run(projectId, serverId);
+    return result.changes > 0;
+  }
+}
+
+export const registry = new ServerRegistry();
