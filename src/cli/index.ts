@@ -327,13 +327,27 @@ program
 
 program
   .command('start')
-  .description('Start the MCP router')
+  .description('Start the MCP router or web dashboard')
   .option('-t, --transport <type>', 'Transport type (stdio|http)', 'stdio')
   .option('-p, --port <port>', 'Port for HTTP transport', '3847')
+  .option('-d, --dashboard', 'Start web dashboard')
   .action(async (opts) => {
     try {
-      info('Starting MCP router...');
-      await router.start();
+      if (opts.dashboard || opts.transport === 'http') {
+        const port = parseInt(opts.port, 10);
+        info(`Starting web dashboard on http://localhost:${port}...`);
+        
+        const { default: webApp } = await import('../web/index.js');
+        const { serve } = await import('@hono/node-server');
+        serve({
+          fetch: webApp.fetch,
+          port
+        });
+        info(`Dashboard running at http://localhost:${port}`);
+      } else {
+        info('Starting MCP router...');
+        await router.start();
+      }
     } catch (err) {
       error(err instanceof Error ? err.message : String(err));
       process.exit(1);
