@@ -603,6 +603,31 @@ program
     }
   });
 
+program
+  .command('install')
+  .description('Build and install Konduct globally (npm link)')
+  .option('--skip-build', 'Skip npm run build')
+  .option('--skip-link', 'Skip npm link')
+  .action((opts) => {
+    try {
+      if (!opts.skipBuild) {
+        info('Running build...');
+        execSync('npm run build', { stdio: 'inherit' });
+      }
+
+      if (!opts.skipLink) {
+        info('Running npm link...');
+        execSync('npm link', { stdio: 'inherit' });
+      }
+
+      success('Konduct installation completed');
+      info('You can now run: konduct doctor');
+    } catch (err) {
+      error(err instanceof Error ? err.message : String(err));
+      process.exit(1);
+    }
+  });
+
 process.on('SIGINT', async () => {
   await router.shutdown();
   process.exit(0);
