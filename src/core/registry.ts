@@ -98,11 +98,11 @@ export class ServerRegistry {
   }
 
   enableServer(id: string): void {
-    db.prepare('UPDATE servers SET enabled = 1, updated_at = datetime("now") WHERE id = ?').run(id);
+    db.prepare("UPDATE servers SET enabled = 1, updated_at = datetime('now') WHERE id = ?").run(id);
   }
 
   disableServer(id: string): void {
-    db.prepare('UPDATE servers SET enabled = 0, updated_at = datetime("now") WHERE id = ?').run(id);
+    db.prepare("UPDATE servers SET enabled = 0, updated_at = datetime('now') WHERE id = ?").run(id);
   }
 
   getServerTools(serverId: string): ToolConfig[] {
