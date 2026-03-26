@@ -4,6 +4,14 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { db } from '../config/db.js';
 import type { ServerConfig, ToolConfig } from '../types/index.js';
 
+interface DiscoveredTool {
+  name: string;
+  title?: string;
+  description?: string;
+  inputSchema?: object;
+  outputSchema?: object;
+}
+
 export class ServerRegistry {
   addServer(config: Omit<ServerConfig, 'id' | 'createdAt' | 'updatedAt'>): string {
     const id = randomUUID();
@@ -111,6 +119,10 @@ export class ServerRegistry {
       id: row.id as string,
       serverId: row.server_id as string,
       toolName: row.tool_name as string,
+      title: row.title as string | undefined,
+      description: row.description as string | undefined,
+      inputSchema: row.input_schema ? JSON.parse(row.input_schema as string) : undefined,
+      outputSchema: row.output_schema ? JSON.parse(row.output_schema as string) : undefined,
       enabled: (row.enabled as number) === 1,
       discoveredAt: row.discovered_at as string
     }));
@@ -122,9 +134,63 @@ export class ServerRegistry {
       id: row.id as string,
       serverId: row.server_id as string,
       toolName: row.tool_name as string,
+      title: row.title as string | undefined,
+      description: row.description as string | undefined,
+      inputSchema: row.input_schema ? JSON.parse(row.input_schema as string) : undefined,
+      outputSchema: row.output_schema ? JSON.parse(row.output_schema as string) : undefined,
       enabled: (row.enabled as number) === 1,
       discoveredAt: row.discovered_at as string
     }));
+  }
+
+  private ensureToolMetadataColumns(): void {
+    const columns = db.prepare("PRAGMA table_info(tools)").all() as Array<Record<string, unknown>>;
+    const columnNames = new Set(columns.map((column) => String(column.name)));
+    const requiredColumns: Array<{ name: string; sql: string }> = [
+      { name: 'title', sql: 'ALTER TABLE tools ADD COLUMN title TEXT' },
+      { name: 'description', sql: 'ALTER TABLE tools ADD COLUMN description TEXT' },
+      { name: 'input_schema', sql: 'ALTER TABLE tools ADD COLUMN input_schema TEXT' },
+      { name: 'output_schema', sql: 'ALTER TABLE tools ADD COLUMN output_schema TEXT' },
+    ];
+
+    for (const column of requiredColumns) {
+      if (!columnNames.has(column.name)) {
+        db.exec(column.sql);
+      }
+    }
+  }
+
+  private upsertTool(serverId: string, tool: DiscoveredTool): void {
+    const id = `${serverId}__${tool.name}`;
+    const existing = db.prepare('SELECT id FROM tools WHERE id = ?').get(id) as Record<string, unknown> | undefined;
+
+    if (!existing) {
+      db.prepare(`
+        INSERT INTO tools (id, server_id, tool_name, title, description, input_schema, output_schema, enabled)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+      `).run(
+        id,
+        serverId,
+        tool.name,
+        tool.title ?? null,
+        tool.description ?? null,
+        tool.inputSchema ? JSON.stringify(tool.inputSchema) : null,
+        tool.outputSchema ? JSON.stringify(tool.outputSchema) : null
+      );
+      return;
+    }
+
+    db.prepare(`
+      UPDATE tools
+      SET title = ?, description = ?, input_schema = ?, output_schema = ?, discovered_at = datetime('now')
+      WHERE id = ?
+    `).run(
+      tool.title ?? null,
+      tool.description ?? null,
+      tool.inputSchema ? JSON.stringify(tool.inputSchema) : null,
+      tool.outputSchema ? JSON.stringify(tool.outputSchema) : null,
+      id
+    );
   }
 
   addTool(serverId: string, toolName: string): void {
@@ -189,12 +255,28 @@ export class ServerRegistry {
 
     try {
       await client.connect(transport);
-      const toolsResponse = await client.listTools() as { tools: Array<{ name: string }> };
+      const toolsResponse = await client.listTools() as {
+        tools: Array<{
+          name: string;
+          title?: string;
+          description?: string;
+          inputSchema?: object;
+          outputSchema?: object;
+        }>;
+      };
       
+      this.ensureToolMetadataColumns();
+
       const toolNames = toolsResponse.tools.map((t) => t.name);
       
-      for (const toolName of toolNames) {
-        this.addTool(serverId, toolName);
+      for (const tool of toolsResponse.tools) {
+        this.upsertTool(serverId, {
+          name: tool.name,
+          title: tool.title,
+          description: tool.description,
+          inputSchema: tool.inputSchema,
+          outputSchema: tool.outputSchema,
+        });
       }
 
       this.cleanTools(serverId, toolNames);

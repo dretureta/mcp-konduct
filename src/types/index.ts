@@ -17,6 +17,10 @@ export interface ToolConfig {
   id: string;
   serverId: string;
   toolName: string;
+  title?: string;
+  description?: string;
+  inputSchema?: object;
+  outputSchema?: object;
   enabled: boolean;
   discoveredAt?: string;
 }

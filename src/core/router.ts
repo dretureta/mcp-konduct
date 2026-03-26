@@ -42,7 +42,8 @@ export class KonductRouter {
           tool.name,
           {
             title: tool.name,
-            description: tool.description || ''
+            description: tool.description || '',
+            inputSchema: tool.inputSchema as Record<string, import('zod').ZodTypeAny>
           },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           async (params: any) => {

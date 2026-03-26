@@ -18,6 +18,10 @@ CREATE TABLE IF NOT EXISTS tools (
   id TEXT PRIMARY KEY,
   server_id TEXT NOT NULL,
   tool_name TEXT NOT NULL,
+  title TEXT,
+  description TEXT,
+  input_schema TEXT,
+  output_schema TEXT,
   enabled INTEGER DEFAULT 1,
   discovered_at TEXT DEFAULT (datetime('now')),
   FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE
