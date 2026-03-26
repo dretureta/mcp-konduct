@@ -56,6 +56,17 @@ const BackupPayloadSchema = z.object({
   }),
 });
 
+const JsonImportServerSchema = z.object({
+  command: z.string().optional(),
+  args: z.array(z.string()).optional(),
+  env: z.record(z.string(), z.string()).optional(),
+  url: z.string().optional(),
+});
+
+const JsonImportPayloadSchema = z.object({
+  mcpServers: z.record(z.string(), JsonImportServerSchema),
+});
+
 type BackupPayload = z.infer<typeof BackupPayloadSchema>;
 
 type ImportMode = 'merge' | 'replace';
@@ -488,6 +499,88 @@ app.post('/api/servers/:id/toggle', (c) => {
 app.post('/api/servers/:id/delete', (c) => {
   registry.removeServer(c.req.param('id'));
   return c.json({ success: true });
+});
+
+app.post('/api/servers/import-json', async (c) => {
+  try {
+    const body = await c.req.json();
+    const payload = JsonImportPayloadSchema.parse(body);
+    const existingServers = registry.listServers();
+    const existingByName = new Map(existingServers.map((server) => [server.name, server]));
+
+    let created = 0;
+    let updated = 0;
+    let skipped = 0;
+    let errors = 0;
+    const messages: string[] = [];
+
+    for (const [name, serverConfig] of Object.entries(payload.mcpServers)) {
+      if (!serverConfig.command && !serverConfig.url) {
+        errors += 1;
+        messages.push(`'${name}' skipped: requires either command or url.`);
+        continue;
+      }
+
+      const hasPlaceholderEnv = Object.values(serverConfig.env ?? {}).some((value) =>
+        value.includes('YOUR_API_KEY') || value.includes('YOUR_')
+      );
+      if (hasPlaceholderEnv) {
+        messages.push(`'${name}' imported with placeholder env values. Update secrets before use.`);
+      }
+
+      const transport = serverConfig.command ? 'stdio' : 'sse';
+      const existing = existingByName.get(name);
+
+      if (existing) {
+        registry.updateServer(existing.id, {
+          name,
+          transport,
+          command: serverConfig.command,
+          args: serverConfig.args,
+          env: serverConfig.env,
+          url: serverConfig.url,
+          enabled: true,
+        });
+        updated += 1;
+      } else {
+        registry.addServer({
+          name,
+          transport,
+          command: serverConfig.command,
+          args: serverConfig.args,
+          env: serverConfig.env,
+          url: serverConfig.url,
+          enabled: true,
+        });
+        created += 1;
+      }
+    }
+
+    if (created === 0 && updated === 0 && errors === 0) {
+      skipped += 1;
+      messages.push('No servers found in import payload.');
+    }
+
+    return c.json({
+      success: errors === 0,
+      summary: { created, updated, skipped, errors },
+      messages,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return c.json({
+        success: false,
+        summary: { created: 0, updated: 0, skipped: 0, errors: error.issues.length },
+        messages: error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`),
+      }, 400);
+    }
+
+    return c.json({
+      success: false,
+      summary: { created: 0, updated: 0, skipped: 0, errors: 1 },
+      messages: [error instanceof Error ? error.message : String(error)],
+    }, 500);
+  }
 });
 
 app.post('/api/servers/:id/discover', async (c) => {
