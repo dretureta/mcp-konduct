@@ -1,5 +1,6 @@
-import React from 'react';
-import { Server, Wrench, Briefcase, Activity, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { Server, Wrench, Briefcase, Activity, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { Card } from '../components/common/Card.tsx';
 import { Badge } from '../components/common/Badge.tsx';
@@ -31,7 +32,15 @@ const StatCard: React.FC<{
 );
 
 export const Dashboard: React.FC = () => {
-  const { servers, isLoading } = useAppContext();
+  const { servers, tools, isLoading, logs, fetchLogs, projects } = useAppContext();
+  const navigate = useNavigate();
+  const serverMap = new Map(servers.map((server) => [server.id, server.name]));
+
+  useEffect(() => {
+    fetchLogs({ limit: 5 });
+  }, [fetchLogs]);
+
+  const recentLogs = logs.slice(0, 5);
 
   if (isLoading) {
     return <Loading label="Syncing system status..." />;
@@ -51,10 +60,10 @@ export const Dashboard: React.FC = () => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Active Servers" value={servers.filter(s => s.status === 'online').length} icon={Server} color="bg-primary" trend="+2 since yesterday" />
-        <StatCard title="Available Tools" value="24" icon={Wrench} color="bg-accent" />
-        <StatCard title="Active Projects" value="8" icon={Briefcase} color="bg-emerald-500" trend="1 completed today" />
-        <StatCard title="Uptime" value="99.9%" icon={CheckCircle2} color="bg-sky-500" />
+        <StatCard title="Active Servers" value={servers.filter(s => s.status === 'online').length} icon={Server} color="bg-primary" />
+        <StatCard title="Available Tools" value={tools.length} icon={Wrench} color="bg-accent" />
+        <StatCard title="Active Projects" value={projects.length} icon={Briefcase} color="bg-emerald-500" />
+        <StatCard title="Enabled Tools" value={tools.filter(t => t.enabled).length} icon={CheckCircle2} color="bg-sky-500" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -65,7 +74,14 @@ export const Dashboard: React.FC = () => {
               <Server size={24} className="text-primary" />
               Connected Servers
             </h2>
-            <Button variant="ghost" size="sm" className="text-primary hover:text-primary-dark">View All</Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-primary hover:text-primary-dark"
+              onClick={() => navigate('/servers')}
+            >
+              View All
+            </Button>
           </div>
           
           <div className="space-y-4">
@@ -101,25 +117,39 @@ export const Dashboard: React.FC = () => {
           </h2>
           <Card className="overflow-hidden">
             <div className="p-6 space-y-6">
-              {[
-                { icon: CheckCircle2, title: 'Server Started', time: '2m ago', color: 'text-emerald-500' },
-                { icon: AlertCircle, title: 'Tool Execution Failed', time: '15m ago', color: 'text-rose-500' },
-                { icon: Clock, title: 'Scheduled Backup', time: '1h ago', color: 'text-sky-500' },
-                { icon: Activity, title: 'Server Registry Updated', time: '3h ago', color: 'text-primary' },
-              ].map((activity, i) => (
-                <div key={i} className="flex gap-4 relative">
-                  {i < 3 && <div className="absolute left-2.5 top-6 bottom-[-1.5rem] w-px bg-slate-200 dark:bg-slate-800" />}
-                  <div className={`z-10 bg-white dark:bg-slate-900 rounded-full p-0.5`}>
-                    <activity.icon size={20} className={activity.color} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">{activity.title}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{activity.time}</p>
-                  </div>
+              {recentLogs.length > 0 ? (
+                recentLogs.map((log, i) => {
+                  const Icon = Number(log.success) === 1 ? CheckCircle2 : AlertCircle;
+                  const color = Number(log.success) === 1 ? 'text-emerald-500' : 'text-rose-500';
+                  const time = new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                  
+                  return (
+                    <div key={log.id} className="flex gap-4 relative">
+                      {i < recentLogs.length - 1 && <div className="absolute left-2.5 top-6 bottom-[-1.5rem] w-px bg-slate-200 dark:bg-slate-800" />}
+                      <div className={`z-10 bg-white dark:bg-slate-900 rounded-full p-0.5`}>
+                        <Icon size={20} className={color} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-slate-900 dark:text-white truncate" title={log.tool_name}>
+                          {log.tool_name}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          {time} • {serverMap.get(log.server_id) || log.server_id.substring(0, 8)}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="py-8 text-center text-slate-500 dark:text-slate-400 text-sm">
+                  No recent activity found.
                 </div>
-              ))}
+              )}
             </div>
-            <button className="w-full py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 text-sm font-bold text-slate-500 hover:text-primary transition-colors">
+            <button 
+              onClick={() => navigate('/logs')}
+              className="w-full py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 text-sm font-bold text-slate-500 hover:text-primary transition-colors"
+            >
               View Audit Log
             </button>
           </Card>
