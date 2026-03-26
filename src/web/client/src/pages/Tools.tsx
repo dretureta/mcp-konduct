@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Wrench, Search, Power, Filter, Server as ServerIcon } from 'lucide-react';
+import { Wrench, Search, Power, Filter, Server as ServerIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { Card } from '../components/common/Card.tsx';
 import { Badge } from '../components/common/Badge.tsx';
@@ -13,6 +13,8 @@ export const Tools: React.FC = () => {
   const { filteredTools: tools, servers, isLoading, toggleTool, searchQuery: globalSearchQuery } = useAppContext();
   const [localSearchQuery, setLocalSearchQuery] = useState('');
   const [serverFilter, setServerFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 20;
 
   const serverMap = new Map(servers.map(s => [s.id, s.name]));
 
@@ -21,6 +23,13 @@ export const Tools: React.FC = () => {
     const matchesServer = serverFilter === 'all' || tool.serverId === serverFilter;
     return matchesSearch && matchesServer;
   });
+
+  const totalPages = Math.ceil(filteredTools.length / PAGE_SIZE);
+  const paginatedTools = filteredTools.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [localSearchQuery, serverFilter]);
 
   if (isLoading && tools.length === 0) {
     return <Loading label="Discovering tools..." />;
@@ -85,7 +94,7 @@ export const Tools: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filteredTools.length === 0 ? (
+              {paginatedTools.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-8 py-20">
                     <EmptyState 
@@ -99,7 +108,7 @@ export const Tools: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filteredTools.map((tool) => (
+                paginatedTools.map((tool) => (
                   <tr key={tool.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
@@ -148,6 +157,54 @@ export const Tools: React.FC = () => {
           </table>
         </div>
       </Card>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-4 bg-white dark:bg-slate-900 border border-t-0 border-slate-200 dark:border-slate-800 rounded-b-2xl">
+          <div className="text-sm text-slate-500 dark:text-slate-400">
+            Showing <span className="font-bold text-slate-700 dark:text-slate-300">{(currentPage - 1) * PAGE_SIZE + 1}</span> to{' '}
+            <span className="font-bold text-slate-700 dark:text-slate-300">{Math.min(currentPage * PAGE_SIZE, filteredTools.length)}</span> of{' '}
+            <span className="font-bold text-slate-700 dark:text-slate-300">{filteredTools.length}</span> tools
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => p - 1)}
+              disabled={currentPage === 1}
+              className="gap-1"
+            >
+              <ChevronLeft size={16} />
+              Previous
+            </Button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).slice(
+                Math.max(0, currentPage - 3),
+                Math.min(totalPages, currentPage + 2)
+              ).map(page => (
+                <Button
+                  key={page}
+                  variant={page === currentPage ? 'primary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setCurrentPage(page)}
+                  className="w-9"
+                >
+                  {page}
+                </Button>
+              ))}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => p + 1)}
+              disabled={currentPage === totalPages}
+              className="gap-1"
+            >
+              Next
+              <ChevronRight size={16} />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -29,6 +29,7 @@ interface AppContextType {
   fetchLogs: (params?: { limit?: number; server?: string; error?: boolean }) => Promise<void>;
   isAddServerModalOpen: boolean;
   setIsAddServerModalOpen: (open: boolean) => void;
+  discoveringServerId: string | null;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -44,6 +45,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [error, setError] = useState<string | null>(null);
   const [isAddServerModalOpen, setIsAddServerModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [discoveringServerId, setDiscoveringServerId] = useState<string | null>(null);
 
   const filteredServers = servers.filter(s => 
     s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -135,10 +137,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const discoverTools = async (id: string) => {
     try {
+      setDiscoveringServerId(id);
       await serverApi.discoverTools(id);
       await refreshData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to discover tools');
+    } finally {
+      setDiscoveringServerId(null);
     }
   };
 
@@ -202,6 +207,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         filteredTools,
         isAddServerModalOpen,
         setIsAddServerModalOpen,
+        discoveringServerId,
       }}
     >
       {children}

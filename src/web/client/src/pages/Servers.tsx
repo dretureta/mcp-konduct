@@ -14,7 +14,7 @@ import { serverApi } from '../utils/api';
 
 export const Servers: React.FC = () => {
   const { 
-    filteredServers: servers, isLoading, toggleServer, deleteServer, discoverTools, addServer, updateServer, refreshData
+    filteredServers: servers, isLoading, toggleServer, deleteServer, discoverTools, addServer, updateServer, refreshData, discoveringServerId
   } = useAppContext();
   
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -223,6 +223,7 @@ export const Servers: React.FC = () => {
               onDelete={() => handleDelete(server.id)}
               onDiscover={() => discoverTools(server.id)}
               onEdit={() => setEditingServer(server)}
+              isDiscovering={discoveringServerId === server.id}
             />
           ))}
         </div>
@@ -237,7 +238,8 @@ const ServerCard: React.FC<{
   onDelete: () => void;
   onDiscover: () => void;
   onEdit: () => void;
-}> = ({ server, onToggle, onDelete, onDiscover, onEdit }) => {
+  isDiscovering: boolean;
+}> = ({ server, onToggle, onDelete, onDiscover, onEdit, isDiscovering }) => {
   return (
     <Card hover className="group h-full flex flex-col">
       <div className="p-6 flex-1 space-y-4">
@@ -248,14 +250,15 @@ const ServerCard: React.FC<{
             <ServerIcon size={24} />
           </div>
           <div className="flex items-center gap-1">
-            <Tooltip content="Discover Tools">
+            <Tooltip content={isDiscovering ? "Discovering..." : "Discover Tools"}>
               <Button 
                 variant="ghost" 
                 size="icon"
                 onClick={onDiscover}
-                className="text-slate-400 hover:text-primary"
+                disabled={isDiscovering}
+                className={isDiscovering ? "text-primary animate-spin" : "text-slate-400 hover:text-primary"}
               >
-                <RefreshCcw size={18} />
+                <RefreshCcw size={18} className={isDiscovering ? "animate-spin" : ""} />
               </Button>
             </Tooltip>
             <Tooltip content="Settings">
