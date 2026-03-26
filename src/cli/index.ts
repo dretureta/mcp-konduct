@@ -12,14 +12,38 @@ import { success, error, warn, info, json, table } from './format.js';
 
 const program = new Command();
 
+const rootExamples = `
+Examples:
+  konduct server list
+  konduct server add --name context7 --transport stdio --command npx --args -y @upstash/context7-mcp
+  konduct server discover <server-id>
+  konduct tool list
+  konduct start
+  konduct start --dashboard --port 3847
+  konduct connect claude
+  konduct logs --last 20 --errors
+`;
+
 program
   .name('konduct')
   .description('MCP server proxy/aggregator')
   .version('1.0.0')
   .option('-j, --json', 'Output as JSON')
-  .option('-v, --verbose', 'Verbose output');
+  .option('-v, --verbose', 'Verbose output')
+  .addHelpText('after', rootExamples);
 
 const serverCmd = program.command('server').description('Manage MCP servers');
+
+serverCmd.addHelpText('after', `
+Examples:
+  konduct server list
+  konduct server add --name filesystem --transport stdio --command npx --args -y @modelcontextprotocol/server-filesystem /tmp
+  konduct server add --name brave-search --transport stdio --command npx --args -y @brave/brave-search-mcp-server --transport stdio --env BRAVE_API_KEY=your_key
+  konduct server add --name remote --transport sse --url https://example.com/mcp
+  konduct server discover <server-id>
+  konduct server disable <server-id>
+  konduct server enable <server-id>
+`);
 
 serverCmd
   .command('add')
@@ -152,6 +176,14 @@ serverCmd
 
 const toolCmd = program.command('tool').description('Manage tools');
 
+toolCmd.addHelpText('after', `
+Examples:
+  konduct tool list
+  konduct tool list --server <server-id>
+  konduct tool disable <tool-id>
+  konduct tool enable <tool-id>
+`);
+
 toolCmd
   .command('list')
   .description('List all tools')
@@ -214,6 +246,14 @@ toolCmd
   });
 
 const projectCmd = program.command('project').description('Manage projects');
+
+projectCmd.addHelpText('after', `
+Examples:
+  konduct project create --name my-project --description "Internal tools"
+  konduct project list
+  konduct project add-server <project-id> <server-id>
+  konduct project remove-server <project-id> <server-id>
+`);
 
 projectCmd
   .command('create')
@@ -390,7 +430,14 @@ program
       error(err instanceof Error ? err.message : String(err));
       process.exit(1);
     }
-  });
+  })
+  .addHelpText('after', `
+Examples:
+  konduct connect claude
+  konduct connect claude --install
+  konduct connect cursor --install
+  konduct connect opencode
+`);
 
 program
   .command('start')
@@ -419,7 +466,14 @@ program
       error(err instanceof Error ? err.message : String(err));
       process.exit(1);
     }
-  });
+  })
+  .addHelpText('after', `
+Examples:
+  konduct start
+  konduct start --dashboard
+  konduct start --dashboard --port 3000
+  konduct start --transport http --port 3847
+`);
 
 program
   .command('status')
@@ -508,7 +562,14 @@ program
       error(err instanceof Error ? err.message : String(err));
       process.exit(1);
     }
-  });
+  })
+  .addHelpText('after', `
+Examples:
+  konduct logs
+  konduct logs --last 100
+  konduct logs --errors
+  konduct logs --server <server-id> --last 50
+`);
 
 program
   .command('doctor')
@@ -601,7 +662,11 @@ program
       error(err instanceof Error ? err.message : String(err));
       process.exit(1);
     }
-  });
+  })
+  .addHelpText('after', `
+Examples:
+  konduct doctor
+`);
 
 program
   .command('install')
@@ -626,7 +691,13 @@ program
       error(err instanceof Error ? err.message : String(err));
       process.exit(1);
     }
-  });
+  })
+  .addHelpText('after', `
+Examples:
+  konduct install
+  konduct install --skip-build
+  konduct install --skip-link
+`);
 
 process.on('SIGINT', async () => {
   await router.shutdown();
