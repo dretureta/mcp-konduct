@@ -232,35 +232,53 @@ src/web/
 
    body {
      background-color: var(--bg);
-     color: var(--text);
-   }
-   ```
+      color: var(--text);
+    }
+    ```
 
-4. **Tailwind Config:** Define custom colors from CSS variables
-   ```typescript
-   // tailwind.config.js
-   module.exports = {
-     theme: {
-       extend: {
-         colors: {
-           primary: 'var(--primary)',
-           'primary-dark': 'var(--primary-dark)',
-           accent: 'var(--accent)',
-           // ... etc
-         }
-       }
-     },
-     darkMode: 'class' // ← Use class strategy, not media
-   };
-   ```
+4. **Tailwind Config:** Use explicit hex values (Tailwind doesn't support CSS variable names directly in theme)
+    ```typescript
+    // tailwind.config.js
+    module.exports = {
+      theme: {
+        extend: {
+          colors: {
+            // Define as explicit hex values
+            primary: '#6366f1',      // Indigo
+            'primary-dark': '#4f46e5',
+            accent: '#ec4899',       // Pink
+            bg: '#0f172a',           // Slate 950 (dark)
+            surface: '#1e293b',      // Slate 900 (dark)
+            text: '#f1f5f9',         // Slate 50 (dark)
+            'text-secondary': '#cbd5e1', // Slate 300 (dark)
+          }
+        }
+      },
+      darkMode: 'class' // ← Use class strategy, not media
+    };
+    ```
+    
+    **Alternative Approach** (if dynamic theming needed later):
+    Use CSS variables with HSL values so Tailwind can read them:
+    ```css
+    :root {
+      --primary: 99, 102, 241;       /* HSL values (h, s, l) */
+    }
+    ```
+    ```typescript
+    colors: {
+      primary: 'hsl(var(--primary))'
+    }
+    ```
 
 5. **localStorage Persistence:**
-   ```typescript
-   // useDarkMode.ts
-   const [isDarkMode, setIsDarkMode] = useState(() => {
-     const stored = localStorage.getItem('theme-mode');
-     return stored === 'light' ? false : true; // default dark
-   });
+    ```typescript
+    // useDarkMode.ts
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+      const stored = localStorage.getItem('theme-mode');
+      return stored === 'light' ? false : true; // default dark
+    });
+
 
    const toggleDarkMode = () => {
      setIsDarkMode(prev => {
@@ -404,17 +422,7 @@ export interface RequestLog {
   toolName: string;
   durationMs: number;
   success: boolean;
-  errorMessage?: string;
-}
-
-// Global app context state
-export interface AppContextType {
-  servers: Server[];
-  tools: Tool[];
-  projects: Project[];
-  isDarkMode: boolean;
-  loading: boolean;
-  error: string | null;
+   errorMessage?: string;
 }
 ```
 
@@ -555,6 +563,17 @@ npm run dev start -d          # Hono on :3000, serves static assets from dist/
 **Proxy Setup** (in `vite.config.ts`):
 - `/api/*` requests during dev → proxied to `http://localhost:3000`
 - Allows developing frontend at :5173 while backend runs at :3000
+
+**CORS Configuration** (in `src/web/server.ts`):
+```typescript
+import { cors } from 'hono/cors';
+
+app.use('*', cors({
+  origin: ['http://localhost:5173', 'http://localhost:3000'],
+  credentials: true,
+}));
+```
+This allows Vite dev server (:5173) to make requests to backend (:3000)
 
 ### Production Build
 
@@ -798,6 +817,127 @@ app.get('/', (c) => c.html(indexHtml)); // SPA fallback
 **Approved by:** (Pending)
 
 **Date Approved:** (Pending)
+
+---
+
+## Appendix: File Templates & Configuration
+
+### Frontend package.json (src/web/client/package.json)
+
+```json
+{
+  "name": "mcp-konduct-dashboard",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
+    "axios": "^1.6.8"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "@testing-library/react": "^15.0.0",
+    "@testing-library/jest-dom": "^6.4.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.40",
+    "tailwindcss": "^3.4.14",
+    "typescript": "^5.6.0",
+    "vite": "^5.4.10",
+    "vitest": "^4.1.1"
+  }
+}
+```
+
+### Tailwind CSS Configuration (src/web/client/tailwind.config.js)
+
+```javascript
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        primary: '#6366f1',      // Indigo
+        'primary-dark': '#4f46e5',
+        'primary-light': '#818cf8',
+        accent: '#ec4899',       // Pink
+        success: '#10b981',
+        error: '#ef4444',
+        warning: '#f59e0b',
+        // Light mode colors
+        'light-bg': '#f8fafc',
+        'light-surface': '#f1f5f9',
+        'light-text': '#0f172a',
+        'light-text-secondary': '#475569',
+        // Dark mode colors (use as fallback when class-based dark mode)
+        'dark-bg': '#0f172a',
+        'dark-surface': '#1e293b',
+        'dark-text': '#f1f5f9',
+        'dark-text-secondary': '#cbd5e1',
+      },
+      fontFamily: {
+        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+      },
+      animation: {
+        fadeIn: 'fadeIn 0.3s ease-in',
+        slideIn: 'slideIn 0.3s ease-in',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        slideIn: {
+          '0%': { transform: 'translateY(-10px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+      },
+    },
+  },
+  darkMode: 'class',
+  plugins: [],
+};
+```
+
+### Vite Configuration (src/web/client/vite.config.ts)
+
+```typescript
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  plugins: [react()],
+  build: {
+    outDir: '../../dist/web/client',
+    emptyOutDir: true,
+    sourcemap: true,
+    minify: 'terser',
+  },
+  server: {
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      }
+    }
+  }
+});
+```
 
 ---
 
