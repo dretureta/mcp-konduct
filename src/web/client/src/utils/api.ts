@@ -1,5 +1,15 @@
 import axios from 'axios';
-import { Server, CreateServerRequest, UpdateServerRequest, DashboardStats, Tool, Project, LogEntry } from '../types';
+import {
+  Server,
+  CreateServerRequest,
+  UpdateServerRequest,
+  DashboardStats,
+  Tool,
+  Project,
+  LogEntry,
+  BackupPayload,
+  ImportResponse,
+} from '../types';
 
 const api = axios.create({
   baseURL: '/api',
@@ -39,6 +49,14 @@ export const logApi = {
 
 export const statsApi = {
   getStats: () => api.get<DashboardStats>('/stats'),
+};
+
+export const settingsApi = {
+  exportConfig: () => api.get<BackupPayload>('/settings/export'),
+  previewImport: (payload: BackupPayload, mode: 'merge' | 'replace') =>
+    api.post<ImportResponse>(`/settings/import?mode=${mode}&dryRun=true`, payload),
+  applyImport: (payload: BackupPayload, mode: 'merge' | 'replace') =>
+    api.post<ImportResponse>(`/settings/import?mode=${mode}&dryRun=false`, payload),
 };
 
 export default api;

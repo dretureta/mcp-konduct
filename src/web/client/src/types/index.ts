@@ -56,3 +56,58 @@ export interface DashboardStats {
   enabledTools: number;
   dbPath: string;
 }
+
+export interface BackupProjectServer {
+  projectId: string;
+  serverId: string;
+}
+
+export interface BackupPayload {
+  version: 'konduct-backup-v1';
+  exportedAt: string;
+  appVersion: string;
+  data: {
+    servers: Array<{
+      id: string;
+      name: string;
+      transport: TransportType;
+      command?: string | null;
+      args?: string | null;
+      env?: string | null;
+      url?: string | null;
+      enabled: number;
+      created_at?: string;
+      updated_at?: string;
+    }>;
+    tools: Array<{
+      id: string;
+      server_id: string;
+      tool_name: string;
+      enabled: number;
+      discovered_at?: string;
+    }>;
+    projects: Array<{
+      id: string;
+      name: string;
+      description?: string | null;
+      created_at?: string;
+    }>;
+    projectServers: BackupProjectServer[];
+  };
+}
+
+export interface ImportSummary {
+  created: number;
+  updated: number;
+  skipped: number;
+  removed: number;
+  errors: number;
+}
+
+export interface ImportResponse {
+  success: boolean;
+  mode: 'merge' | 'replace';
+  dryRun: boolean;
+  summary: ImportSummary;
+  messages: string[];
+}
