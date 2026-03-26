@@ -192,6 +192,257 @@ const analyzeImportImpact = (payload: BackupPayload, mode: ImportMode): { summar
   return { summary, messages };
 };
 
+const applyImportMerge = (payload: BackupPayload): { summary: ImportSummary; messages: string[] } => {
+  const summary = emptySummary();
+  const messages: string[] = [];
+
+  const existingServers = db.prepare('SELECT id, name FROM servers').all() as Array<Record<string, unknown>>;
+  const existingProjects = db.prepare('SELECT id, name FROM projects').all() as Array<Record<string, unknown>>;
+
+  const serverIdByName = new Map(existingServers.map((row) => [row.name as string, row.id as string]));
+  const serverExistsById = new Set(existingServers.map((row) => row.id as string));
+  const projectIdByName = new Map(existingProjects.map((row) => [row.name as string, row.id as string]));
+  const projectExistsById = new Set(existingProjects.map((row) => row.id as string));
+
+  const serverIdMap = new Map<string, string>();
+  const projectIdMap = new Map<string, string>();
+
+  const updateServerStmt = db.prepare(`
+    UPDATE servers
+    SET name = ?, transport = ?, command = ?, args = ?, env = ?, url = ?, enabled = ?, updated_at = datetime('now')
+    WHERE id = ?
+  `);
+  const insertServerStmt = db.prepare(`
+    INSERT INTO servers (id, name, transport, command, args, env, url, enabled, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now')), COALESCE(?, datetime('now')))
+  `);
+
+  for (const server of payload.data.servers) {
+    let targetServerId = server.id;
+
+    if (serverExistsById.has(server.id)) {
+      summary.updated += 1;
+    } else {
+      const byNameId = serverIdByName.get(server.name);
+      if (byNameId) {
+        targetServerId = byNameId;
+        summary.updated += 1;
+      } else {
+        summary.created += 1;
+      }
+    }
+
+    if (serverExistsById.has(targetServerId)) {
+      updateServerStmt.run(
+        server.name,
+        server.transport,
+        server.command ?? null,
+        server.args ?? null,
+        server.env ?? null,
+        server.url ?? null,
+        server.enabled,
+        targetServerId
+      );
+    } else {
+      insertServerStmt.run(
+        targetServerId,
+        server.name,
+        server.transport,
+        server.command ?? null,
+        server.args ?? null,
+        server.env ?? null,
+        server.url ?? null,
+        server.enabled,
+        server.created_at ?? null,
+        server.updated_at ?? null
+      );
+      serverExistsById.add(targetServerId);
+      serverIdByName.set(server.name, targetServerId);
+    }
+
+    serverIdMap.set(server.id, targetServerId);
+  }
+
+  const updateProjectStmt = db.prepare(`
+    UPDATE projects
+    SET name = ?, description = ?
+    WHERE id = ?
+  `);
+  const insertProjectStmt = db.prepare(`
+    INSERT INTO projects (id, name, description, created_at)
+    VALUES (?, ?, ?, COALESCE(?, datetime('now')))
+  `);
+
+  for (const project of payload.data.projects) {
+    let targetProjectId = project.id;
+
+    if (projectExistsById.has(project.id)) {
+      summary.updated += 1;
+    } else {
+      const byNameId = projectIdByName.get(project.name);
+      if (byNameId) {
+        targetProjectId = byNameId;
+        summary.updated += 1;
+      } else {
+        summary.created += 1;
+      }
+    }
+
+    if (projectExistsById.has(targetProjectId)) {
+      updateProjectStmt.run(project.name, project.description ?? null, targetProjectId);
+    } else {
+      insertProjectStmt.run(targetProjectId, project.name, project.description ?? null, project.created_at ?? null);
+      projectExistsById.add(targetProjectId);
+      projectIdByName.set(project.name, targetProjectId);
+    }
+
+    projectIdMap.set(project.id, targetProjectId);
+  }
+
+  const existingToolsById = new Set(
+    (db.prepare('SELECT id FROM tools').all() as Array<Record<string, unknown>>).map((row) => row.id as string)
+  );
+  const updateToolStmt = db.prepare('UPDATE tools SET server_id = ?, tool_name = ?, enabled = ? WHERE id = ?');
+  const insertToolStmt = db.prepare(`
+    INSERT INTO tools (id, server_id, tool_name, enabled, discovered_at)
+    VALUES (?, ?, ?, ?, COALESCE(?, datetime('now')))
+  `);
+
+  for (const tool of payload.data.tools) {
+    const resolvedServerId = serverIdMap.get(tool.server_id) ?? tool.server_id;
+    const resolvedToolId = tool.id.includes('__') ? `${resolvedServerId}__${tool.tool_name}` : tool.id;
+
+    if (existingToolsById.has(resolvedToolId)) {
+      updateToolStmt.run(resolvedServerId, tool.tool_name, tool.enabled, resolvedToolId);
+      summary.updated += 1;
+    } else {
+      insertToolStmt.run(resolvedToolId, resolvedServerId, tool.tool_name, tool.enabled, tool.discovered_at ?? null);
+      existingToolsById.add(resolvedToolId);
+      summary.created += 1;
+    }
+  }
+
+  const insertRelationStmt = db.prepare('INSERT OR IGNORE INTO project_servers (project_id, server_id) VALUES (?, ?)');
+
+  for (const relation of payload.data.projectServers) {
+    const resolvedProjectId = projectIdMap.get(relation.projectId) ?? relation.projectId;
+    const resolvedServerId = serverIdMap.get(relation.serverId) ?? relation.serverId;
+
+    if (!projectExistsById.has(resolvedProjectId) || !serverExistsById.has(resolvedServerId)) {
+      summary.errors += 1;
+      messages.push(`Relation skipped: project '${relation.projectId}' or server '${relation.serverId}' not found.`);
+      continue;
+    }
+
+    const result = insertRelationStmt.run(resolvedProjectId, resolvedServerId);
+    if (result.changes > 0) {
+      summary.created += 1;
+    } else {
+      summary.skipped += 1;
+    }
+  }
+
+  return { summary, messages };
+};
+
+const applyImportReplace = (payload: BackupPayload): { summary: ImportSummary; messages: string[] } => {
+  const summary = emptySummary();
+  const messages: string[] = [];
+
+  const currentServers = db.prepare('SELECT COUNT(*) as count FROM servers').get() as { count: number };
+  const currentTools = db.prepare('SELECT COUNT(*) as count FROM tools').get() as { count: number };
+  const currentProjects = db.prepare('SELECT COUNT(*) as count FROM projects').get() as { count: number };
+  const currentRelations = db.prepare('SELECT COUNT(*) as count FROM project_servers').get() as { count: number };
+  summary.removed = currentServers.count + currentTools.count + currentProjects.count + currentRelations.count;
+
+  const serverIds = new Set(payload.data.servers.map((server) => server.id));
+  const projectIds = new Set(payload.data.projects.map((project) => project.id));
+
+  const runReplace = db.transaction(() => {
+    db.prepare('DELETE FROM project_servers').run();
+    db.prepare('DELETE FROM tools').run();
+    db.prepare('DELETE FROM projects').run();
+    db.prepare('DELETE FROM servers').run();
+
+    const insertServerStmt = db.prepare(`
+      INSERT INTO servers (id, name, transport, command, args, env, url, enabled, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now')), COALESCE(?, datetime('now')))
+    `);
+    const insertToolStmt = db.prepare(`
+      INSERT INTO tools (id, server_id, tool_name, enabled, discovered_at)
+      VALUES (?, ?, ?, ?, COALESCE(?, datetime('now')))
+    `);
+    const insertProjectStmt = db.prepare(`
+      INSERT INTO projects (id, name, description, created_at)
+      VALUES (?, ?, ?, COALESCE(?, datetime('now')))
+    `);
+    const insertRelationStmt = db.prepare('INSERT OR IGNORE INTO project_servers (project_id, server_id) VALUES (?, ?)');
+
+    for (const server of payload.data.servers) {
+      insertServerStmt.run(
+        server.id,
+        server.name,
+        server.transport,
+        server.command ?? null,
+        server.args ?? null,
+        server.env ?? null,
+        server.url ?? null,
+        server.enabled,
+        server.created_at ?? null,
+        server.updated_at ?? null
+      );
+      summary.created += 1;
+    }
+
+    for (const tool of payload.data.tools) {
+      if (!serverIds.has(tool.server_id)) {
+        summary.errors += 1;
+        messages.push(`Tool skipped: server '${tool.server_id}' not found.`);
+        continue;
+      }
+
+      insertToolStmt.run(
+        tool.id,
+        tool.server_id,
+        tool.tool_name,
+        tool.enabled,
+        tool.discovered_at ?? null
+      );
+      summary.created += 1;
+    }
+
+    for (const project of payload.data.projects) {
+      insertProjectStmt.run(project.id, project.name, project.description ?? null, project.created_at ?? null);
+      summary.created += 1;
+    }
+
+    for (const relation of payload.data.projectServers) {
+      if (!projectIds.has(relation.projectId) || !serverIds.has(relation.serverId)) {
+        summary.errors += 1;
+        messages.push(`Relation skipped: project '${relation.projectId}' or server '${relation.serverId}' not found.`);
+        continue;
+      }
+
+      const result = insertRelationStmt.run(relation.projectId, relation.serverId);
+      if (result.changes > 0) {
+        summary.created += 1;
+      } else {
+        summary.skipped += 1;
+      }
+    }
+  });
+
+  runReplace();
+  return { summary, messages };
+};
+
+const applyImportPayload = (payload: BackupPayload, mode: ImportMode): { summary: ImportSummary; messages: string[] } => {
+  if (mode === 'replace') {
+    return applyImportReplace(payload);
+  }
+  return applyImportMerge(payload);
+};
+
 app.use('*', logger());
 app.use('*', cors());
 
@@ -375,13 +626,15 @@ app.post('/api/settings/import', async (c) => {
       });
     }
 
+    const applyResult = applyImportPayload(payload, mode);
+
     return c.json({
-      success: false,
+      success: true,
       mode,
       dryRun: false,
-      summary,
-      messages: ['Apply mode not implemented yet. Use dryRun=true for preview.'],
-    }, 501);
+      summary: applyResult.summary,
+      messages: applyResult.messages.length > 0 ? applyResult.messages : ['Import applied successfully.'],
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return c.json({
