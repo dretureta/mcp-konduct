@@ -907,10 +907,40 @@ export default {
         },
       },
     },
-  },
-  darkMode: 'class',
-  plugins: [],
+   },
+   darkMode: 'class',
+   plugins: [],
 };
+```
+
+### PostCSS Configuration (src/web/client/postcss.config.js)
+
+```javascript
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};
+```
+
+### TypeScript Configuration (src/web/client/tsconfig.json)
+
+```json
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "jsx": "react-jsx"
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "__tests__"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
 ```
 
 ### Vite Configuration (src/web/client/vite.config.ts)
@@ -942,6 +972,91 @@ export default defineConfig({
 ---
 
 ## Appendix: File Templates
+
+### App.tsx Template (Root Component with Context Provider)
+
+```typescript
+import { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AppContext, AppContextType } from './context/AppContext';
+import { useDarkMode } from './hooks/useDarkMode';
+import { useServers } from './hooks/useServers';
+import { useTools } from './hooks/useTools';
+
+// Pages
+import { Dashboard } from './pages/Dashboard';
+import { ServersPage } from './pages/ServersPage';
+import { ToolsPage } from './pages/ToolsPage';
+
+// Layout
+import { Sidebar } from './components/Sidebar';
+import { Header } from './components/Header';
+
+export function App() {
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const { servers, fetchServers } = useServers();
+  const { tools, fetchTools } = useTools();
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  // Apply dark mode class to html
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
+  // Initial data fetch
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([fetchServers(), fetchTools()])
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const contextValue: AppContextType = {
+    servers,
+    tools,
+    projects: [], // TODO: add useProjects
+    logs: [],     // TODO: add useLogs
+    isDarkMode,
+    sidebarOpen: true,
+    loading,
+    error,
+    fetchServers,
+    fetchTools,
+    fetchProjects: async () => {}, // TODO
+    fetchLogs: async () => {},     // TODO
+    toggleDarkMode,
+    setSidebarOpen: () => {},      // TODO
+    clearError: () => setError(null),
+  };
+
+  return (
+    <AppContext.Provider value={contextValue}>
+      <Router>
+        <div className="flex h-screen bg-dark-bg text-dark-text dark:bg-dark-bg dark:text-dark-text">
+          <Sidebar />
+          <main className="flex-1 flex flex-col overflow-hidden">
+            <Header onToggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} />
+            <div className="flex-1 overflow-auto p-8">
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/servers" element={<ServersPage />} />
+                <Route path="/tools" element={<ToolsPage />} />
+              </Routes>
+            </div>
+          </main>
+        </div>
+      </Router>
+    </AppContext.Provider>
+  );
+}
+
+export default App;
+```
 
 ### React Component Template
 ```typescript
