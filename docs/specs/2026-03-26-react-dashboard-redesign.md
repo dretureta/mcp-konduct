@@ -96,13 +96,20 @@ src/web/
     │   ├── styles/
     │   │   ├── globals.css       # Tailwind + theme variables
     │   │   └── tailwind.config.js
-    │   └── utils/
-    │       └── api.ts            # Axios instance + request helpers
-    ├── index.html               # HTML template (Vite)
-    ├── vite.config.ts           # Vite configuration
-    ├── tsconfig.json            # TypeScript config (extends root)
-    ├── package.json             # Frontend dependencies only
-    └── src/web/client.test.tsx  # Component tests
+     │   └── utils/
+     │       └── api.ts            # Axios instance + request helpers
+     │   └── __tests__/            # Component tests
+     │       ├── components/
+     │       │   ├── Sidebar.test.tsx
+     │       │   ├── ServerCard.test.tsx
+     │       │   └── Modal.test.tsx
+     │       └── hooks/
+     │           ├── useServers.test.ts
+     │           └── useDarkMode.test.ts
+     ├── index.html               # HTML template (Vite)
+     ├── vite.config.ts           # Vite configuration
+     ├── tsconfig.json            # TypeScript config (extends root)
+     └── package.json             # Frontend dependencies only
 ```
 
 ---
@@ -179,31 +186,235 @@ src/web/
 
 ### Dark Mode Implementation
 
-**Mechanism:**
-1. `useDarkMode()` hook manages state from localStorage
-2. Hook provides: `isDarkMode`, `toggleDarkMode()`
-3. Theme applied via CSS custom properties (variables)
-4. Toggle button in header calls `toggleDarkMode()`
-5. Persists to localStorage for user preference
+**Mechanism (Tailwind + CSS Variables):**
 
-**Example:**
+1. **HTML Root Class:** Toggle `dark` class on `<html>` element
+   ```typescript
+   // In App.tsx or Header.tsx
+   useEffect(() => {
+     if (isDarkMode) {
+       document.documentElement.classList.add('dark');
+     } else {
+       document.documentElement.classList.remove('dark');
+     }
+   }, [isDarkMode]);
+   ```
+
+2. **Tailwind Dark Mode:** Uses `dark:` prefix in class names
+   ```typescript
+   <div className="bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50">
+     Content
+   </div>
+   ```
+
+3. **CSS Variables:** Define in `:root` and `html.dark`
+   ```css
+   /* src/web/client/src/styles/globals.css */
+   :root {
+     --primary: #6366f1;
+     --primary-dark: #4f46e5;
+     --accent: #ec4899;
+     --bg: #f8fafc;
+     --surface: #f1f5f9;
+     --text: #0f172a;
+     --text-secondary: #475569;
+   }
+
+   html.dark {
+     --primary: #6366f1;
+     --primary-dark: #4f46e5;
+     --accent: #ec4899;
+     --bg: #0f172a;
+     --surface: #1e293b;
+     --text: #f1f5f9;
+     --text-secondary: #cbd5e1;
+   }
+
+   body {
+     background-color: var(--bg);
+     color: var(--text);
+   }
+   ```
+
+4. **Tailwind Config:** Define custom colors from CSS variables
+   ```typescript
+   // tailwind.config.js
+   module.exports = {
+     theme: {
+       extend: {
+         colors: {
+           primary: 'var(--primary)',
+           'primary-dark': 'var(--primary-dark)',
+           accent: 'var(--accent)',
+           // ... etc
+         }
+       }
+     },
+     darkMode: 'class' // ← Use class strategy, not media
+   };
+   ```
+
+5. **localStorage Persistence:**
+   ```typescript
+   // useDarkMode.ts
+   const [isDarkMode, setIsDarkMode] = useState(() => {
+     const stored = localStorage.getItem('theme-mode');
+     return stored === 'light' ? false : true; // default dark
+   });
+
+   const toggleDarkMode = () => {
+     setIsDarkMode(prev => {
+       const newMode = !prev;
+       localStorage.setItem('theme-mode', newMode ? 'dark' : 'light');
+       return newMode;
+     });
+   };
+   ```
+
+**Result:** Both Tailwind's `dark:` classes AND CSS variables work together. CSS variables provide flexibility; Tailwind provides rapid utility styling.
+
+---
+
+## API Response Types & Schemas
+
+**All API responses follow a standard JSON format:**
+
+### Server Responses
 ```typescript
-// src/web/client/src/hooks/useDarkMode.ts
-export function useDarkMode() {
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const stored = localStorage.getItem('theme-mode');
-    return stored === 'light' ? false : true; // default dark
-  });
+// GET /api/servers → List
+{
+  servers: {
+    id: string;
+    name: string;
+    transport: 'stdio' | 'sse' | 'streamable-http';
+    command?: string;
+    args?: string[];
+    env?: Record<string, string>;
+    url?: string;
+    enabled: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+  }[]
+}
 
-  const toggleDarkMode = () => {
-    setIsDarkMode(prev => {
-      const newMode = !prev;
-      localStorage.setItem('theme-mode', newMode ? 'dark' : 'light');
-      return newMode;
-    });
-  };
+// GET /api/servers/:id → Single
+{
+  id: string;
+  name: string;
+  transport: TransportType;
+  command?: string;
+  args?: string[];
+  env?: Record<string, string>;
+  url?: string;
+  enabled: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
-  return { isDarkMode, toggleDarkMode };
+// POST /api/servers/:id/update → Success (302 redirect)
+// DELETE /api/servers/:id → Success (200 OK)
+```
+
+### Error Responses
+```typescript
+// All errors return:
+{
+  error: string;     // Human-readable message
+  code?: string;     // Error code (e.g., 'NOT_FOUND')
+  details?: object;  // Additional context
+}
+// HTTP status: 400 (bad request), 404 (not found), 500 (server error)
+```
+
+### Tool & Project Responses
+```typescript
+// GET /api/tools → List
+{
+  tools: {
+    name: string;
+    originalName: string;
+    serverId: string;
+    description?: string;
+    inputSchema: object;
+    outputSchema?: object;
+  }[]
+}
+
+// GET /api/projects → List
+{
+  projects: {
+    id: string;
+    name: string;
+    description?: string;
+    createdAt?: string;
+    serverCount: number;
+  }[]
+}
+
+// GET /api/logs?limit=50 → List (default limit 50, max 500)
+{
+  logs: {
+    id: number;
+    timestamp: string;
+    serverId: string;
+    toolName: string;
+    durationMs: number;
+    success: boolean;
+    errorMessage?: string;
+  }[]
+}
+```
+
+**Frontend TypeScript Types** (mirrored in `src/web/client/src/types/index.ts`):
+```typescript
+export interface Server {
+  id: string;
+  name: string;
+  transport: TransportType;
+  command?: string;
+  args?: string[];
+  env?: Record<string, string>;
+  url?: string;
+  enabled: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Tool {
+  name: string;
+  originalName: string;
+  serverId: string;
+  description?: string;
+  inputSchema: Record<string, unknown>;
+  outputSchema?: Record<string, unknown>;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt?: string;
+  serverCount: number;
+}
+
+export interface RequestLog {
+  id: number;
+  timestamp: string;
+  serverId: string;
+  toolName: string;
+  durationMs: number;
+  success: boolean;
+  errorMessage?: string;
+}
+
+// Global app context state
+export interface AppContextType {
+  servers: Server[];
+  tools: Tool[];
+  projects: Project[];
+  isDarkMode: boolean;
+  loading: boolean;
+  error: string | null;
 }
 ```
 
@@ -275,31 +486,106 @@ GET    /api/logs/:id                   # Log detail
 
 ---
 
+## Global State Management (AppContext)
+
+**Context Shape** (defined in `src/web/client/src/context/AppContext.tsx`):
+
+```typescript
+interface AppContextType {
+  // Data state
+  servers: Server[];
+  tools: Tool[];
+  projects: Project[];
+  logs: RequestLog[];
+
+  // UI state
+  isDarkMode: boolean;
+  sidebarOpen: boolean;
+
+  // Loading & error state
+  loading: boolean;
+  error: string | null;
+
+  // Dispatch functions
+  fetchServers: () => Promise<void>;
+  fetchTools: () => Promise<void>;
+  fetchProjects: () => Promise<void>;
+  fetchLogs: (limit?: number) => Promise<void>;
+  toggleDarkMode: () => void;
+  setSidebarOpen: (open: boolean) => void;
+  clearError: () => void;
+}
+
+export const AppContext = createContext<AppContextType | undefined>(undefined);
+```
+
+**Usage Pattern:**
+
+1. **Page Load:** `useEffect(() => { fetchServers(); }, [])`
+2. **Component Render:** `const { servers } = useContext(AppContext)` → get cached data
+3. **User Action:** Call `fetchServers()` → API call → Context updates → components re-render
+4. **Caching:** Data stays in Context until page refresh or explicit refetch (simple, suitable for small dataset)
+
+**Future Upgrade:** If caching becomes complex → swap React Context for **TanStack Query** or **Zustand**
+
+---
+
 ## Development Workflow
 
 ### Local Development
 
 ```bash
-# Terminal 1: Frontend dev server
-cd src/web/client
+# Setup (once)
 npm install
-npm run dev              # Vite server on :5173, HMR enabled
+npm run build                 # Initial build
+
+# Terminal 1: Frontend dev server with hot reload
+cd src/web/client
+npm run dev                   # Vite on :5173, HMR enabled, proxies /api to :3000
 
 # Terminal 2: Backend dev server
-npm run dev start -d     # Hono on :3000, serves static assets
+npm run dev start -d          # Hono on :3000, serves static assets from dist/
+
+# Visit: http://localhost:3000 (backend serves React)
+# OR:    http://localhost:5173 (Vite dev server with HMR)
 ```
 
-**HMR (Hot Module Replacement):** Edit React components → auto-refresh in browser (no page reload)
+**HMR (Hot Module Replacement):** Edit React components → instant refresh without losing state
+
+**Proxy Setup** (in `vite.config.ts`):
+- `/api/*` requests during dev → proxied to `http://localhost:3000`
+- Allows developing frontend at :5173 while backend runs at :3000
 
 ### Production Build
 
 ```bash
-npm run build            # Builds both backend + frontend
-                         # - tsc compiles src/ → dist/
-                         # - vite build compiles React → dist/web/client/
+# From root directory
+npm run build
 
-konduct start --dashboard  # Starts Hono, serves React
-                           # http://localhost:3000
+# What happens:
+# 1. tsc compiles src/ → dist/ (backend TypeScript)
+# 2. cd src/web/client && vite build
+#    - Compiles React/TypeScript
+#    - Bundles with Tailwind CSS
+#    - Output: dist/web/client/ (HTML + JS + CSS)
+# 3. Hono middleware configured to serve dist/web/client/* files
+
+# Run production build:
+konduct start --dashboard
+
+# Backend on :3000, serves React SPA
+# Visit: http://localhost:3000
+```
+
+**Build Script** (root `package.json`):
+```json
+{
+  "scripts": {
+    "build": "tsc && cd src/web/client && npm install && npm run build",
+    "dev": "tsx src/cli/index.ts",
+    "start": "node dist/cli/index.js"
+  }
+}
 ```
 
 ---
@@ -307,6 +593,20 @@ konduct start --dashboard  # Starts Hono, serves React
 ## Testing Strategy
 
 ### Frontend Testing
+
+**Test Organization:**
+
+| Level | Framework | What | Where |
+|-------|-----------|------|-------|
+| **Unit** | Vitest + React Testing Library | Components, hooks | `src/__tests__/components/*.test.tsx`, `src/__tests__/hooks/*.test.ts` |
+| **Integration** | Vitest | Hook + API mocking | `src/__tests__/pages/*.test.tsx` |
+| **E2E** | Playwright (optional) | Full user workflows | `e2e/dashboard.spec.ts` |
+| **Backend** | Vitest (existing) | API endpoints | `src/web/__tests__/*.test.ts` |
+
+**Target Coverage:** 
+- Components: 80%+ 
+- Hooks: 90%+
+- Critical paths (server CRUD, tool execution): 100%
 
 **Unit Tests (Components):**
 ```typescript
