@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Server as ServerIcon, Settings2, Trash2, RefreshCcw, ExternalLink, Plus } from 'lucide-react';
+import { Server as ServerIcon, Settings2, Trash2, RefreshCcw, ExternalLink, Plus, FileJson, Upload } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import { Server } from '../types';
+import { JsonImportPayload, JsonImportResponse, Server } from '../types';
 import { Modal } from '../components/ui/Modal';
 import { ServerForm } from '../components/ui/ServerForm';
 import { Card } from '../components/common/Card.tsx';
@@ -10,14 +10,20 @@ import { Button } from '../components/common/Button.tsx';
 import { Loading } from '../components/common/Loading.tsx';
 import { EmptyState } from '../components/common/EmptyState.tsx';
 import { Tooltip } from '../components/common/Tooltip.tsx';
+import { serverApi } from '../utils/api';
 
 export const Servers: React.FC = () => {
   const { 
-    servers, isLoading, toggleServer, deleteServer, discoverTools, addServer, updateServer 
+    filteredServers: servers, isLoading, toggleServer, deleteServer, discoverTools, addServer, updateServer, refreshData
   } = useAppContext();
   
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingServer, setEditingServer] = useState<Server | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [jsonInput, setJsonInput] = useState('');
+  const [importResult, setImportResult] = useState<JsonImportResponse | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
 
   if (isLoading && servers.length === 0) {
     return <Loading label="Loading servers..." />;
@@ -29,6 +35,44 @@ export const Servers: React.FC = () => {
     }
   };
 
+  const handleImportFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const content = await file.text();
+    setJsonInput(content);
+    setImportResult(null);
+    setImportError(null);
+  };
+
+  const handleImportJson = async () => {
+    setImportError(null);
+    setImportResult(null);
+
+    if (!jsonInput.trim()) {
+      setImportError('Paste a JSON payload or upload a file first.');
+      return;
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(jsonInput);
+    } catch {
+      setImportError('Invalid JSON format. Check the payload and try again.');
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const response = await serverApi.importFromJson(parsed as JsonImportPayload);
+      setImportResult(response.data);
+      await refreshData();
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : 'Import failed');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -36,14 +80,95 @@ export const Servers: React.FC = () => {
           <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Servers</h1>
           <p className="text-slate-500 dark:text-slate-400 font-medium">Manage and configure your MCP servers</p>
         </div>
-        <Button 
-          onClick={() => setIsAddModalOpen(true)}
-          className="w-full md:w-auto"
-        >
-          <Plus size={20} />
-          <span>Add Server</span>
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <Button
+            variant="secondary"
+            onClick={() => setIsImportModalOpen(true)}
+            className="w-full md:w-auto"
+          >
+            <FileJson size={20} />
+            <span>Import JSON</span>
+          </Button>
+          <Button 
+            onClick={() => setIsAddModalOpen(true)}
+            className="w-full md:w-auto"
+          >
+            <Plus size={20} />
+            <span>Add Server</span>
+          </Button>
+        </div>
       </div>
+
+      <Modal
+        isOpen={isImportModalOpen}
+        onClose={() => {
+          setIsImportModalOpen(false);
+          setImportResult(null);
+          setImportError(null);
+        }}
+        title="Import MCP Servers from JSON"
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">JSON Payload</label>
+            <textarea
+              rows={10}
+              className="w-full bg-slate-100 dark:bg-slate-800 border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono text-xs"
+              placeholder='{"mcpServers": {"brave-search": {"command": "docker", "args": ["run", "-i"]}}}'
+              value={jsonInput}
+              onChange={(e) => setJsonInput(e.target.value)}
+            />
+          </div>
+
+          <div className="flex items-center gap-3">
+            <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-sm font-bold cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+              <Upload size={16} />
+              Upload JSON file
+              <input type="file" accept="application/json" className="hidden" onChange={handleImportFile} />
+            </label>
+            <span className="text-xs text-slate-500">Supports OpenCode-style `mcpServers` format.</span>
+          </div>
+
+          {importError && (
+            <div className="text-sm text-rose-500 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-900 rounded-xl p-3">
+              {importError}
+            </div>
+          )}
+
+          {importResult && (
+            <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-y-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge variant="success">Created: {importResult.summary.created}</Badge>
+                <Badge variant="primary">Updated: {importResult.summary.updated}</Badge>
+                <Badge variant="secondary">Skipped: {importResult.summary.skipped}</Badge>
+                <Badge variant={importResult.summary.errors > 0 ? 'danger' : 'success'}>
+                  Errors: {importResult.summary.errors}
+                </Badge>
+              </div>
+              {importResult.messages.length > 0 && (
+                <ul className="list-disc pl-5 text-xs text-slate-600 dark:text-slate-300 space-y-1">
+                  {importResult.messages.map((message, idx) => (
+                    <li key={`${idx}-${message}`}>{message}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button
+              variant="secondary"
+              onClick={() => setIsImportModalOpen(false)}
+              disabled={isImporting}
+            >
+              Close
+            </Button>
+            <Button onClick={handleImportJson} isLoading={isImporting}>
+              Import Servers
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal 
         isOpen={isAddModalOpen} 
