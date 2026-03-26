@@ -1,13 +1,18 @@
 # mcp-konduct
 
-MCP proxy/aggregator for running multiple downstream MCP servers behind one upstream MCP server.
+**MCP proxy/aggregator for running multiple downstream MCP servers behind one upstream MCP server.**
 
-`mcp-konduct` lets you:
-- register MCP servers (`stdio`, `sse`, `streamable-http` metadata)
-- discover and toggle tools per server
-- expose a single MCP endpoint to clients (OpenCode, Cursor, Claude, etc.)
-- scope MCP exposure by project name (`--project`) for client isolation
-- inspect logs and health with built-in CLI commands
+Konduct lets you orchestrate multiple Model Context Protocol (MCP) servers through a single unified interface. Register servers, discover their tools, manage them individually or group them by project, and expose everything to MCP clients like OpenCode, Cursor, and Claude.
+
+## What It Does
+
+- **Multi-server registry** — Register and manage multiple MCP servers (stdio, SSE, streamable-http)
+- **Tool discovery & control** — Discover tools per server, enable/disable individually or globally
+- **Unified MCP endpoint** — Expose all servers as a single MCP stdio interface to upstream clients
+- **Project scoping** — Isolate server access by project name for multi-environment setups
+- **Built-in dashboard** — Optional web UI for management and inspection
+- **CLI tools** — Full command-line interface for server, tool, and project management
+- **Health diagnostics** — Built-in `doctor` command for troubleshooting
 
 ## Features
 
@@ -16,46 +21,52 @@ MCP proxy/aggregator for running multiple downstream MCP servers behind one upst
 - Name-collision handling via aggregation
 - MCP stdio router for upstream clients
 - Project-scoped MCP mode (`konduct start --project <name>`)
-- Optional web dashboard mode
-- Client config helpers (`connect`)
-- Health checks via `doctor`
+- Optional web dashboard mode (`--dashboard`)
+- Client config helpers (`konduct connect`)
+- Health checks via `konduct doctor`
+- Persistent storage with cross-platform support
 
 ## Requirements
 
-- Node.js 18+
-- npm
+- **Node.js** 18 or higher
+- **npm** (comes with Node.js)
 
-## Install
+## Installation
 
-### Local development
+### Quick Setup (Global)
+
+```bash
+npm install
+npm run build
+node dist/cli/index.js install
+```
+
+Then use `konduct` from anywhere:
+
+```bash
+konduct doctor
+```
+
+### Local Development
 
 ```bash
 npm install
 npm run build
 ```
 
-### Global command (recommended)
+Run commands with:
 
 ```bash
-# from project root
-node dist/cli/index.js install
-```
-
-After that, use `konduct` directly:
-
-```bash
-konduct doctor
+npm run start -- <command>
+# or
+npm run dev -- <command>
 ```
 
 ## Quick Start
 
-1) Build project:
+### 1. Add a Server
 
-```bash
-npm run build
-```
-
-2) Add a downstream MCP server (example: filesystem):
+Register a downstream MCP server (example: filesystem):
 
 ```bash
 konduct server add \
@@ -65,7 +76,9 @@ konduct server add \
   --args -y @modelcontextprotocol/server-filesystem /tmp
 ```
 
-3) Discover tools for that server:
+### 2. Discover Tools
+
+List available servers and their tools:
 
 ```bash
 konduct server list
@@ -73,15 +86,19 @@ konduct server discover <server-id>
 konduct tool list
 ```
 
-4) Start Konduct as MCP stdio server:
+### 3. Start Konduct
+
+Run as MCP stdio server to expose tools upstream:
 
 ```bash
 konduct start
 ```
 
-## Common Commands
+Your client can now connect and use all discovered tools.
 
-### Server management
+## Core Commands
+
+### Server Management
 
 ```bash
 konduct server add --name <name> --transport stdio --command <cmd> --args <args...>
@@ -92,7 +109,7 @@ konduct server disable <server-id>
 konduct server remove <server-id>
 ```
 
-### Tool management
+### Tool Management
 
 ```bash
 konduct tool list
@@ -101,7 +118,7 @@ konduct tool enable <tool-id>
 konduct tool disable <tool-id>
 ```
 
-### Project management
+### Project Management
 
 ```bash
 konduct project create --name <name> [--description <text>]
@@ -110,124 +127,218 @@ konduct project add-server <project-id> <server-id>
 konduct project remove-server <project-id> <server-id>
 ```
 
-### Runtime / diagnostics
+### Runtime & Diagnostics
 
 ```bash
-konduct start
-konduct start --project <project-name>
-konduct start --dashboard --port 3847
-konduct status
-konduct logs --last 50
-konduct doctor
+konduct start                                 # Start as MCP stdio server
+konduct start --project <project-name>       # Start scoped to project
+konduct start --dashboard --port 3847        # Web dashboard mode
+konduct status                               # Check runtime status
+konduct logs --last 50                       # View recent logs
+konduct doctor                               # Health diagnostics
 ```
 
 ## Project-Scoped MCP Access
 
-Use this when you want a client (for example VSCode MCP) to only see tools from one project.
+Isolate tool exposure by project. Use this when you want different clients to see different tool sets.
 
-1) Create a project and attach servers:
+### Setup
+
+1. Create a project and add servers:
 
 ```bash
 konduct project create --name Dev_Env
 konduct project add-server <project-id> <server-id>
 ```
 
-2) Start Konduct scoped to that project name:
+2. Start Konduct scoped to that project:
 
 ```bash
 konduct start --project Dev_Env
 ```
 
-Behavior:
-- If the project does not exist, Konduct exits with an error.
-- Only linked servers are considered.
-- Only tools from those servers are exposed and callable.
+### Behavior
 
-## Connect to Clients
+- If the project doesn't exist, Konduct exits with an error
+- Only servers linked to the project are considered
+- Only tools from those servers are exposed to clients
 
-Generate (or install) config snippets:
+## Connecting to Clients
+
+Generate client configuration snippets for OpenCode, Cursor, Claude, or VSCode:
 
 ```bash
+# View config (don't install)
 konduct connect opencode
-konduct connect opencode --project Dev_Env
-konduct connect opencode --install
-
-konduct connect cursor
 konduct connect cursor --project Dev_Env
-konduct connect cursor --install
-
 konduct connect claude
-konduct connect claude --project Dev_Env
-konduct connect claude --install
 
-konduct connect vscode
-konduct connect vscode --project Dev_Env
+# Install to client config automatically
+konduct connect opencode --install
+konduct connect cursor --install
+konduct connect vscode --install
 ```
 
-When `--project` is provided to `connect`, generated config includes `start --project <name>` in args.
+When `--project` is provided, the generated config includes `start --project <name>`.
 
-Notes:
-- OpenCode config path: `~/.config/opencode/opencode.jsonc`
-- Cursor config path: `~/.cursor/mcp.json`
-- Claude path depends on OS and app install layout
+### Config Paths
+
+- **OpenCode:** `~/.config/opencode/opencode.jsonc`
+- **Cursor:** `~/.cursor/mcp.json`
+- **Claude:** Platform-dependent (app install location)
 
 ## Web Dashboard
 
-Run web mode:
+Launch the optional web dashboard for visual management:
 
 ```bash
 konduct start --dashboard --port 3847
 ```
 
-Open:
+Open in browser:
 
-```text
+```
 http://localhost:3847
 ```
 
+The dashboard provides:
+- Server registration and discovery UI
+- Tool enable/disable controls
+- Project management interface
+- Real-time status and logs
+
 ## Database
 
-Konduct stores data in SQLite:
-- Linux: `~/.config/mcp-konduct/konduct.db`
-- Windows: `%APPDATA%/mcp-konduct/konduct.db`
+Konduct stores all data in SQLite:
 
-## Add Existing OpenCode MCP Servers to Konduct
+- **Linux:** `~/.config/mcp-konduct/konduct.db`
+- **macOS:** `~/Library/Application Support/mcp-konduct/konduct.db`
+- **Windows:** `%APPDATA%/mcp-konduct/konduct.db`
 
-Map OpenCode `type: local` to Konduct `transport: stdio`.
+To reset the database, delete the file and restart Konduct. It will recreate the schema automatically.
 
-Examples:
+## Examples
+
+### Add OpenCode MCP Servers
+
+Map common OpenCode server types to Konduct:
 
 ```bash
-konduct server add --name chrome-devtools --transport stdio --command npx --args -y chrome-devtools-mcp@latest
-konduct server add --name context7 --transport stdio --command npx --args -y @upstash/context7-mcp
-konduct server add --name testsprite --transport stdio --command npx --args -y @testsprite/testsprite-mcp@latest --env API_KEY=your_key
+konduct server add --name chrome-devtools \
+  --transport stdio --command npx \
+  --args -y chrome-devtools-mcp@latest
+
+konduct server add --name context7 \
+  --transport stdio --command npx \
+  --args -y @upstash/context7-mcp
+
+konduct server add --name testsprite \
+  --transport stdio --command npx \
+  --args -y @testsprite/testsprite-mcp@latest --env API_KEY=your_key
 ```
 
-Then discover tools for each server:
+Then discover tools:
 
 ```bash
 konduct server discover <server-id>
 ```
 
+### Multi-Project Setup
+
+```bash
+# Project 1: Development environment
+konduct project create --name Dev --description "Development tools"
+konduct project add-server <dev-project-id> <chrome-server-id>
+konduct project add-server <dev-project-id> <filesystem-server-id>
+
+# Project 2: Production environment (read-only)
+konduct project create --name Prod --description "Production tools"
+konduct project add-server <prod-project-id> <filesystem-server-id>
+
+# Start scoped to project
+konduct start --project Dev
+# In another terminal:
+konduct start --project Prod
+```
+
 ## Development
+
+### Build
+
+```bash
+npm run build
+```
+
+### Testing
+
+```bash
+npm run test
+npm run test -- --watch
+npm run test -- --ui
+npm run test -- src/path/to/file.test.ts
+```
+
+### Development Mode
 
 ```bash
 npm run dev -- --help
-npm run build
-npm test
+npm run dev -- server list
+npm run dev -- start
 ```
+
+See [AGENTS.md](./AGENTS.md) for detailed development guidelines, code style, and architecture.
 
 ## Troubleshooting
 
-- If client says `MCP error -32000: Connection closed`, run:
+### Client Connection Issues
+
+If your client reports `MCP error -32000: Connection closed`:
 
 ```bash
 konduct doctor
 ```
 
-- Ensure your client config points to the built runtime (`dist/cli/index.js`) and not unresolved source imports.
-- Rebuild after code changes:
+This runs diagnostics on server health, database connectivity, and config.
+
+### Ensure Correct Runtime Path
+
+Make sure your client config points to the compiled runtime:
+
+- **Correct:** `~/.npm/_npx/XXX/lib/node_modules/mcp-konduct/dist/cli/index.js`
+- **Incorrect:** `~/project/src/cli/index.ts` (uncompiled source)
+
+### Rebuild After Changes
+
+If you modify the source code:
 
 ```bash
 npm run build
 ```
+
+The CLI automatically uses `dist/` directory.
+
+### Database Reset
+
+Delete the database to start fresh:
+
+```bash
+rm ~/.config/mcp-konduct/konduct.db
+konduct doctor  # Recreates schema
+```
+
+## Architecture
+
+Konduct is built with:
+
+- **Core:** TypeScript with strict type checking
+- **CLI:** Commander.js for command parsing
+- **Database:** SQLite with better-sqlite3 (sync API)
+- **Web:** Hono + HTMX with Editorial Refined design
+- **Validation:** Zod for runtime schema validation
+- **Logging:** Pino for structured logs
+
+See [AGENTS.md](./AGENTS.md) for full architecture details and coding standards.
+
+## License
+
+MIT
