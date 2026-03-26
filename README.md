@@ -6,6 +6,7 @@ MCP proxy/aggregator for running multiple downstream MCP servers behind one upst
 - register MCP servers (`stdio`, `sse`, `streamable-http` metadata)
 - discover and toggle tools per server
 - expose a single MCP endpoint to clients (OpenCode, Cursor, Claude, etc.)
+- scope MCP exposure by project name (`--project`) for client isolation
 - inspect logs and health with built-in CLI commands
 
 ## Features
@@ -14,6 +15,7 @@ MCP proxy/aggregator for running multiple downstream MCP servers behind one upst
 - Tool discovery and enable/disable controls
 - Name-collision handling via aggregation
 - MCP stdio router for upstream clients
+- Project-scoped MCP mode (`konduct start --project <name>`)
 - Optional web dashboard mode
 - Client config helpers (`connect`)
 - Health checks via `doctor`
@@ -112,11 +114,34 @@ konduct project remove-server <project-id> <server-id>
 
 ```bash
 konduct start
+konduct start --project <project-name>
 konduct start --dashboard --port 3847
 konduct status
 konduct logs --last 50
 konduct doctor
 ```
+
+## Project-Scoped MCP Access
+
+Use this when you want a client (for example VSCode MCP) to only see tools from one project.
+
+1) Create a project and attach servers:
+
+```bash
+konduct project create --name Dev_Env
+konduct project add-server <project-id> <server-id>
+```
+
+2) Start Konduct scoped to that project name:
+
+```bash
+konduct start --project Dev_Env
+```
+
+Behavior:
+- If the project does not exist, Konduct exits with an error.
+- Only linked servers are considered.
+- Only tools from those servers are exposed and callable.
 
 ## Connect to Clients
 
@@ -124,14 +149,22 @@ Generate (or install) config snippets:
 
 ```bash
 konduct connect opencode
+konduct connect opencode --project Dev_Env
 konduct connect opencode --install
 
 konduct connect cursor
+konduct connect cursor --project Dev_Env
 konduct connect cursor --install
 
 konduct connect claude
+konduct connect claude --project Dev_Env
 konduct connect claude --install
+
+konduct connect vscode
+konduct connect vscode --project Dev_Env
 ```
+
+When `--project` is provided to `connect`, generated config includes `start --project <name>` in args.
 
 Notes:
 - OpenCode config path: `~/.config/opencode/opencode.jsonc`
