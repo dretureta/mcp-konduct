@@ -6,6 +6,7 @@ import { Card } from '../components/common/Card.tsx';
 import { Badge } from '../components/common/Badge.tsx';
 import { Button } from '../components/common/Button.tsx';
 import { Loading } from '../components/common/Loading.tsx';
+import { parseLogTimestamp } from '../utils/time';
 
 const StatCard: React.FC<{
   title: string;
@@ -121,7 +122,7 @@ export const Dashboard: React.FC = () => {
                 recentLogs.map((log, i) => {
                   const Icon = Number(log.success) === 1 ? CheckCircle2 : AlertCircle;
                   const color = Number(log.success) === 1 ? 'text-emerald-500' : 'text-rose-500';
-                  const time = new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                  const time = parseLogTimestamp(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                   
                   return (
                     <div key={log.id} className="flex gap-4 relative">

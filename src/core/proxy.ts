@@ -109,10 +109,11 @@ export class ConnectionPool {
     success: boolean,
     errorMessage?: string
   ): void {
+    const timestamp = new Date().toISOString();
     db.prepare(`
-      INSERT INTO request_logs (server_id, tool_name, duration_ms, success, error_message)
-      VALUES (?, ?, ?, ?, ?)
-    `).run(serverId, toolName, durationMs, success ? 1 : 0, errorMessage || null);
+      INSERT INTO request_logs (timestamp, server_id, tool_name, duration_ms, success, error_message)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(timestamp, serverId, toolName, durationMs, success ? 1 : 0, errorMessage || null);
   }
 
   startCleanup(): void {

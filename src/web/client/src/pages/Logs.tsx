@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Filter, RefreshCcw, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
+import { Filter, RefreshCcw, CheckCircle2, AlertCircle, Clock, Search, X } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { Card } from '../components/common/Card.tsx';
 import { Badge } from '../components/common/Badge.tsx';
@@ -7,12 +7,15 @@ import { Button } from '../components/common/Button.tsx';
 import { Loading } from '../components/common/Loading.tsx';
 import { EmptyState } from '../components/common/EmptyState.tsx';
 import { Tooltip } from '../components/common/Tooltip.tsx';
+import { LogEntry } from '../types';
+import { parseLogTimestamp } from '../utils/time';
 
 export const Logs: React.FC = () => {
   const { logs, servers, fetchLogs, isLoading } = useAppContext();
   const [limit, setLimit] = useState(50);
   const [serverFilter, setServerFilter] = useState('');
   const [errorOnly, setErrorOnly] = useState(false);
+  const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
 
   const serverMap = new Map(servers.map(s => [s.id, s.name]));
 
@@ -116,14 +119,18 @@ export const Logs: React.FC = () => {
                 </tr>
               ) : (
                 logs.map((log, i) => (
-                  <tr key={i} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
+                  <tr 
+                    key={i} 
+                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group cursor-pointer"
+                    onClick={() => setSelectedLog(log)}
+                  >
                     <td className="px-8 py-4 whitespace-nowrap">
                       <div className="flex flex-col">
                         <span className="font-bold text-slate-900 dark:text-white">
-                          {new Date(log.timestamp).toLocaleTimeString()}
+                          {parseLogTimestamp(log.timestamp).toLocaleTimeString()}
                         </span>
                         <span className="text-[10px] text-slate-400 opacity-60">
-                          {new Date(log.timestamp).toLocaleDateString()}
+                          {parseLogTimestamp(log.timestamp).toLocaleDateString()}
                         </span>
                       </div>
                     </td>
@@ -154,6 +161,9 @@ export const Logs: React.FC = () => {
                             Error <AlertCircle size={12} className="ml-1.5" />
                           </Badge>
                         )}
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                          <Search size={14} className="text-primary" />
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -167,6 +177,76 @@ export const Logs: React.FC = () => {
       {isLoading && logs.length > 0 && (
         <div className="flex justify-center pt-4">
           <Loading size="sm" label="Updating logs..." className="flex-row" />
+        </div>
+      )}
+
+      {/* Log Detail Modal */}
+      {selectedLog && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <Card className="w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-xl ${Number(selectedLog.success) === 1 ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600' : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600'}`}>
+                  {Number(selectedLog.success) === 1 ? <CheckCircle2 size={24} /> : <AlertCircle size={24} />}
+                </div>
+                <div>
+                  <h3 className="font-black text-xl text-slate-900 dark:text-white leading-tight">Log Details</h3>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-0.5">ID: #{selectedLog.id}</p>
+                </div>
+              </div>
+              <Button variant="secondary" size="icon" onClick={() => setSelectedLog(null)} className="rounded-xl">
+                <X size={20} />
+              </Button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-slate-800">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-1">Server</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{serverMap.get(selectedLog.server_id) || selectedLog.server_id}</span>
+                </div>
+                <div className="p-4 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-slate-800">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-1">Tool</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{selectedLog.tool_name}</span>
+                </div>
+                <div className="p-4 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-slate-800">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-1">Duration</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{selectedLog.duration_ms}ms</span>
+                </div>
+                <div className="p-4 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-slate-800">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-1">Timestamp</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{parseLogTimestamp(selectedLog.timestamp).toLocaleString()}</span>
+                </div>
+              </div>
+
+              {selectedLog.error_message && (
+                <div className="space-y-2">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Error Message</span>
+                  <div className="p-4 bg-rose-50 dark:bg-rose-900/10 rounded-2xl border border-rose-100 dark:border-rose-900/20 text-rose-600 dark:text-rose-400 font-mono text-sm">
+                    {selectedLog.error_message}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Payload Summary</span>
+                <div className="p-4 bg-slate-900 text-slate-300 rounded-2xl font-mono text-sm overflow-x-auto">
+                  <pre>{JSON.stringify({
+                    server_id: selectedLog.server_id,
+                    tool: selectedLog.tool_name,
+                    success: !!Number(selectedLog.success),
+                    error: selectedLog.error_message || null
+                  }, null, 2)}</pre>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+              <Button variant="primary" onClick={() => setSelectedLog(null)} className="rounded-xl px-8">
+                Close
+              </Button>
+            </div>
+          </Card>
         </div>
       )}
     </div>
