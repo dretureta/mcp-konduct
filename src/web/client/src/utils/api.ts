@@ -9,6 +9,8 @@ import {
   LogEntry,
   BackupPayload,
   ImportResponse,
+  JsonImportPayload,
+  JsonImportResponse,
 } from '../types';
 
 const api = axios.create({
@@ -26,6 +28,7 @@ export const serverApi = {
   toggleServer: (id: string) => api.post(`/servers/${id}/toggle`),
   deleteServer: (id: string) => api.post(`/servers/${id}/delete`),
   discoverTools: (id: string) => api.post(`/servers/${id}/discover`),
+  importFromJson: (payload: JsonImportPayload) => api.post<JsonImportResponse>('/servers/import-json', payload),
 };
 
 export const toolApi = {

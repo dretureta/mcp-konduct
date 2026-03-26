@@ -111,3 +111,27 @@ export interface ImportResponse {
   summary: ImportSummary;
   messages: string[];
 }
+
+export interface JsonImportServerConfig {
+  command?: string;
+  args?: string[];
+  env?: Record<string, string>;
+  url?: string;
+}
+
+export interface JsonImportPayload {
+  mcpServers: Record<string, JsonImportServerConfig>;
+}
+
+export interface JsonImportSummary {
+  created: number;
+  updated: number;
+  skipped: number;
+  errors: number;
+}
+
+export interface JsonImportResponse {
+  success: boolean;
+  summary: JsonImportSummary;
+  messages: string[];
+}
