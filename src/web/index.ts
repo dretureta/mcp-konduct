@@ -3,12 +3,98 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { join } from 'path';
+import { z } from 'zod';
 import { registry } from '../core/registry.js';
 import { getDbPath } from '../config/db.js';
 import { db } from '../config/db.js';
 import { readFileSync, existsSync } from 'fs';
 
 const app = new Hono();
+
+const BackupServerSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  transport: z.enum(['stdio', 'sse', 'streamable-http']),
+  command: z.string().nullable().optional(),
+  args: z.string().nullable().optional(),
+  env: z.string().nullable().optional(),
+  url: z.string().nullable().optional(),
+  enabled: z.number(),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
+});
+
+const BackupToolSchema = z.object({
+  id: z.string(),
+  server_id: z.string(),
+  tool_name: z.string(),
+  enabled: z.number(),
+  discovered_at: z.string().optional(),
+});
+
+const BackupProjectSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  created_at: z.string().optional(),
+});
+
+const BackupProjectServerSchema = z.object({
+  projectId: z.string(),
+  serverId: z.string(),
+});
+
+const BackupPayloadSchema = z.object({
+  version: z.literal('konduct-backup-v1'),
+  exportedAt: z.string(),
+  appVersion: z.string(),
+  data: z.object({
+    servers: z.array(BackupServerSchema),
+    tools: z.array(BackupToolSchema),
+    projects: z.array(BackupProjectSchema),
+    projectServers: z.array(BackupProjectServerSchema),
+  }),
+});
+
+type BackupPayload = z.infer<typeof BackupPayloadSchema>;
+
+const getAppVersion = (): string => {
+  const packageJsonPath = join(process.cwd(), 'package.json');
+  if (!existsSync(packageJsonPath)) {
+    return 'unknown';
+  }
+
+  try {
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8')) as Record<string, unknown>;
+    return typeof packageJson.version === 'string' ? packageJson.version : 'unknown';
+  } catch {
+    return 'unknown';
+  }
+};
+
+const buildBackupPayload = (): BackupPayload => {
+  const servers = db.prepare('SELECT * FROM servers ORDER BY name').all() as Array<z.infer<typeof BackupServerSchema>>;
+  const tools = db.prepare('SELECT * FROM tools ORDER BY server_id, tool_name').all() as Array<z.infer<typeof BackupToolSchema>>;
+  const projects = db.prepare('SELECT * FROM projects ORDER BY name').all() as Array<z.infer<typeof BackupProjectSchema>>;
+  const projectServerRows = db.prepare('SELECT project_id, server_id FROM project_servers ORDER BY project_id, server_id').all() as Array<Record<string, unknown>>;
+
+  const payload: BackupPayload = {
+    version: 'konduct-backup-v1',
+    exportedAt: new Date().toISOString(),
+    appVersion: getAppVersion(),
+    data: {
+      servers,
+      tools,
+      projects,
+      projectServers: projectServerRows.map((row) => ({
+        projectId: row.project_id as string,
+        serverId: row.server_id as string,
+      })),
+    },
+  };
+
+  return BackupPayloadSchema.parse(payload);
+};
 
 app.use('*', logger());
 app.use('*', cors());
@@ -165,6 +251,10 @@ app.get('/api/stats', (c) => {
     enabledTools: tools.filter(t => t.enabled).length,
     dbPath: getDbPath()
   });
+});
+
+app.get('/api/settings/export', (c) => {
+  return c.json(buildBackupPayload());
 });
 
 // Static files and SPA fallback
