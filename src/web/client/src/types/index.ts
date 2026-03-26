@@ -39,6 +39,20 @@ export interface Project {
   createdAt?: string;
 }
 
+export interface ProjectFullResponse {
+  project: Project;
+  servers: Server[];
+  tools: Tool[];
+  summary: {
+    serverCount: number;
+    toolCount: number;
+  };
+  config: {
+    command: string;
+    description: string;
+  };
+}
+
 export interface LogEntry {
   id: number;
   timestamp: string;

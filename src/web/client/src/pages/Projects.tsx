@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Briefcase, Plus, Trash2, Folder, ExternalLink, Link2, Unlink2 } from 'lucide-react';
+import { Briefcase, Plus, Trash2, Folder, ExternalLink, Link2, Unlink2, ChevronDown, Copy } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { Modal } from '../components/ui/Modal';
 import { Card } from '../components/common/Card.tsx';
@@ -10,7 +10,7 @@ import { Loading } from '../components/common/Loading.tsx';
 import { EmptyState } from '../components/common/EmptyState.tsx';
 import { Tooltip } from '../components/common/Tooltip.tsx';
 import { projectApi } from '../utils/api';
-import { Project, Server } from '../types';
+import { Project, ProjectFullResponse, Server } from '../types';
 
 export const Projects: React.FC = () => {
   const { projects, servers, isLoading, createProject, deleteProject, refreshData } = useAppContext();
@@ -21,6 +21,9 @@ export const Projects: React.FC = () => {
   const [managingProject, setManagingProject] = useState<Project | null>(null);
   const [projectServers, setProjectServers] = useState<Server[]>([]);
   const [isManageLoading, setIsManageLoading] = useState(false);
+  const [expandedProjectId, setExpandedProjectId] = useState<string | null>(null);
+  const [projectDetails, setProjectDetails] = useState<Record<string, ProjectFullResponse>>({});
+  const [loadingProjectDetails, setLoadingProjectDetails] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,6 +89,34 @@ export const Projects: React.FC = () => {
 
   const projectServerIds = new Set(projectServers.map((server) => server.id));
   const availableServers = servers.filter((server) => !projectServerIds.has(server.id));
+
+  const toggleProjectDetails = async (project: Project) => {
+    if (expandedProjectId === project.id) {
+      setExpandedProjectId(null);
+      return;
+    }
+
+    setExpandedProjectId(project.id);
+    if (projectDetails[project.id]) {
+      return;
+    }
+
+    setLoadingProjectDetails(project.id);
+    try {
+      const response = await projectApi.getProjectFull(project.id);
+      setProjectDetails((prev) => ({ ...prev, [project.id]: response.data }));
+    } finally {
+      setLoadingProjectDetails(null);
+    }
+  };
+
+  const copyProjectCommand = async (command: string) => {
+    try {
+      await navigator.clipboard.writeText(command);
+    } catch (error) {
+      console.error('Failed to copy project command:', error);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
@@ -247,6 +278,77 @@ export const Projects: React.FC = () => {
                     {project.description || 'No description provided for this project.'}
                   </p>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => toggleProjectDetails(project)}
+                  className="justify-start px-0 text-slate-500 hover:text-primary"
+                >
+                  <ChevronDown
+                    size={14}
+                    className={expandedProjectId === project.id ? 'rotate-180 transition-transform' : 'transition-transform'}
+                  />
+                  {expandedProjectId === project.id ? 'Hide project scope' : 'Show project scope'}
+                </Button>
+                {expandedProjectId === project.id && (
+                  <div className="space-y-4 rounded-xl border border-slate-200 dark:border-slate-800 p-4 bg-slate-50 dark:bg-slate-900/40">
+                    {loadingProjectDetails === project.id ? (
+                      <Loading label="Loading project scope..." className="py-4" />
+                    ) : projectDetails[project.id] ? (
+                      <>
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+                            Servers ({projectDetails[project.id].summary.serverCount})
+                          </p>
+                          {projectDetails[project.id].servers.length === 0 ? (
+                            <p className="text-xs text-slate-500">No linked servers</p>
+                          ) : (
+                            <div className="flex flex-wrap gap-2">
+                              {projectDetails[project.id].servers.map((server) => (
+                                <Badge key={server.id} variant="secondary" size="sm">
+                                  {server.name}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+                            Tools ({projectDetails[project.id].summary.toolCount})
+                          </p>
+                          {projectDetails[project.id].tools.length === 0 ? (
+                            <p className="text-xs text-slate-500">No discovered tools in this scope</p>
+                          ) : (
+                            <div className="max-h-28 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2 py-1">
+                              {projectDetails[project.id].tools.map((tool) => (
+                                <p key={tool.id} className="text-[11px] font-mono text-slate-700 dark:text-slate-300 py-1">
+                                  {tool.toolName}
+                                </p>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+                            MCP command
+                          </p>
+                          <div className="rounded-lg bg-slate-900 text-slate-100 text-[11px] font-mono px-3 py-2 break-all">
+                            {projectDetails[project.id].config.command}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyProjectCommand(projectDetails[project.id].config.command)}
+                            className="mt-2 text-slate-500 hover:text-primary"
+                          >
+                            <Copy size={13} />
+                            Copy command
+                          </Button>
+                        </div>
+                      </>
+                    ) : null}
+                  </div>
+                )}
               </div>
               <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between rounded-b-2xl">
                 <Badge variant="secondary" size="md">

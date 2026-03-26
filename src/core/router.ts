@@ -10,6 +10,7 @@ export class KonductRouter {
   private server: McpServer;
   private toolDefinitions: ToolDefinition[] = [];
   private transport: StdioServerTransport | null = null;
+  private projectFilterName: string | null = null;
 
   constructor() {
     this.server = new McpServer({
@@ -28,8 +29,16 @@ export class KonductRouter {
 
   async initialize(): Promise<void> {
     try {
-      const enabledServers = registry.listServers().filter(s => s.enabled);
-      const allTools = registry.listAllTools();
+      let enabledServers = registry.listServers().filter(s => s.enabled);
+      let allTools = registry.listAllTools();
+
+      if (this.projectFilterName) {
+        const projectServerIds = new Set(
+          registry.getProjectServers(this.projectFilterName).map((server) => server.id)
+        );
+        enabledServers = enabledServers.filter((server) => projectServerIds.has(server.id));
+        allTools = allTools.filter((tool) => projectServerIds.has(tool.serverId));
+      }
 
       const tools = aggregator.aggregateTools(enabledServers, allTools);
       this.toolDefinitions = tools;
@@ -58,10 +67,12 @@ export class KonductRouter {
       }
     } catch (error) {
       console.error('[Router] Initialization error:', error);
+      throw error;
     }
   }
 
-  async start(): Promise<void> {
+  async start(projectFilterName?: string | null): Promise<void> {
+    this.projectFilterName = projectFilterName ?? null;
     await this.initialize();
     connectionPool.startCleanup();
 
@@ -71,6 +82,10 @@ export class KonductRouter {
 
   async refresh(): Promise<void> {
     await this.initialize();
+  }
+
+  setProjectFilter(projectFilterName: string | null): void {
+    this.projectFilterName = projectFilterName;
   }
 
   async shutdown(): Promise<void> {

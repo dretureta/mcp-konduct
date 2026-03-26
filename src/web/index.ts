@@ -639,6 +639,32 @@ app.get('/api/projects/:id/servers', (c) => {
   return c.json(registry.listServers(projectId));
 });
 
+app.get('/api/projects/:id/full', (c) => {
+  const projectId = c.req.param('id');
+  const project = registry.getProject(projectId);
+
+  if (!project) {
+    return c.json({ error: 'Project not found' }, 404);
+  }
+
+  const servers = registry.getProjectServers(project.name);
+  const tools = registry.getProjectTools(project.name);
+
+  return c.json({
+    project,
+    servers,
+    tools,
+    summary: {
+      serverCount: servers.length,
+      toolCount: tools.length,
+    },
+    config: {
+      command: `konduct start --project "${project.name}"`,
+      description: 'Use this command in your MCP client config to scope access to this project only.',
+    },
+  });
+});
+
 app.post('/api/projects/:id/servers/:serverId/add', (c) => {
   const projectId = c.req.param('id');
   const serverId = c.req.param('serverId');

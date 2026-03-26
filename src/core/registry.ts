@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { db } from '../config/db.js';
-import type { ServerConfig, ToolConfig } from '../types/index.js';
+import type { Project, ServerConfig, ToolConfig } from '../types/index.js';
 
 interface DiscoveredTool {
   name: string;
@@ -326,6 +326,55 @@ export class ServerRegistry {
       description: row.description as string | undefined,
       createdAt: row.created_at as string
     }));
+  }
+
+  getProject(id: string): Project | null {
+    const row = db.prepare('SELECT * FROM projects WHERE id = ?').get(id) as Record<string, unknown> | undefined;
+    if (!row) {
+      return null;
+    }
+    return {
+      id: row.id as string,
+      name: row.name as string,
+      description: row.description as string | undefined,
+      createdAt: row.created_at as string | undefined,
+    };
+  }
+
+  getProjectByName(name: string): Project | null {
+    const row = db.prepare('SELECT * FROM projects WHERE name = ?').get(name) as Record<string, unknown> | undefined;
+    if (!row) {
+      return null;
+    }
+    return {
+      id: row.id as string,
+      name: row.name as string,
+      description: row.description as string | undefined,
+      createdAt: row.created_at as string | undefined,
+    };
+  }
+
+  getProjectServers(projectName: string): ServerConfig[] {
+    const project = this.getProjectByName(projectName);
+    if (!project) {
+      throw new Error(`Project not found: ${projectName}`);
+    }
+
+    const rows = db.prepare(`
+      SELECT s.*
+      FROM servers s
+      JOIN project_servers ps ON s.id = ps.server_id
+      WHERE ps.project_id = ?
+      ORDER BY s.name
+    `).all(project.id) as Record<string, unknown>[];
+
+    return rows.map((row) => this.mapServerRow(row));
+  }
+
+  getProjectTools(projectName: string): ToolConfig[] {
+    const servers = this.getProjectServers(projectName);
+    const serverIds = new Set(servers.map((server) => server.id));
+    return this.listAllTools().filter((tool) => serverIds.has(tool.serverId));
   }
 
   addServerToProject(projectId: string, serverId: string): void {

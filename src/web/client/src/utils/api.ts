@@ -6,6 +6,7 @@ import {
   DashboardStats,
   Tool,
   Project,
+  ProjectFullResponse,
   LogEntry,
   BackupPayload,
   ImportResponse,
@@ -41,6 +42,7 @@ export const projectApi = {
   createProject: (name: string) => api.post(`/projects?name=${encodeURIComponent(name)}`),
   deleteProject: (id: string) => api.post(`/projects/${id}/delete`),
   getProjectServers: (id: string) => api.get<Server[]>(`/projects/${id}/servers`),
+  getProjectFull: (id: string) => api.get<ProjectFullResponse>(`/projects/${id}/full`),
   addServerToProject: (projectId: string, serverId: string) => api.post(`/projects/${projectId}/servers/${serverId}/add`),
   removeServerFromProject: (projectId: string, serverId: string) => api.post(`/projects/${projectId}/servers/${serverId}/remove`),
 };

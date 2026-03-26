@@ -329,22 +329,31 @@ program
   .command('connect')
   .description('Generate or install client configuration')
   .argument('<client>', 'Client type (claude|cursor|cline|opencode|vscode|custom)')
-  .option('-p, --project <id>', 'Project ID')
+  .option('-p, --project <name>', 'Project name scope for MCP access')
   .option('-i, --install', 'Install configuration directly')
   .action(async (client, opts) => {
     try {
       const configPath = process.execPath;
       const scriptPath = process.argv[1];
+      const startArgs = [scriptPath, 'start'];
+
+      if (opts.project) {
+        const project = registry.getProjectByName(opts.project);
+        if (!project) {
+          throw new Error(`Project not found: ${opts.project}`);
+        }
+        startArgs.push('--project', project.name);
+      }
 
       const mcpConfig = {
         command: configPath,
-        args: [scriptPath, 'start'],
+        args: startArgs,
         env: {}
       };
 
       const opencodeConfig = {
         type: 'local' as const,
-        command: [configPath, scriptPath, 'start'],
+        command: [configPath, ...startArgs],
         enabled: true
       };
 
@@ -434,6 +443,7 @@ program
   .addHelpText('after', `
 Examples:
   konduct connect claude
+  konduct connect claude --project app-dev
   konduct connect claude --install
   konduct connect cursor --install
   konduct connect opencode
@@ -443,10 +453,24 @@ program
   .command('start')
   .description('Start the MCP router or web dashboard')
   .option('-t, --transport <type>', 'Transport type (stdio|http)', 'stdio')
-  .option('-p, --port <port>', 'Port for HTTP transport', '3847')
+  .option('--port <port>', 'Port for HTTP transport', '3847')
   .option('-d, --dashboard', 'Start web dashboard')
+  .option('--project <name>', 'Restrict MCP tools to a project name')
   .action(async (opts) => {
     try {
+      if (opts.project) {
+        const project = registry.getProjectByName(opts.project);
+        if (!project) {
+          error(`Project not found: ${opts.project}`);
+          process.exit(1);
+        }
+
+        const projectServers = registry.getProjectServers(opts.project);
+        if (projectServers.length === 0) {
+          warn(`Project '${opts.project}' has no linked servers. MCP will expose 0 tools.`);
+        }
+      }
+
       if (opts.dashboard || opts.transport === 'http') {
         const port = parseInt(opts.port, 10);
         info(`Starting web dashboard on http://localhost:${port}...`);
@@ -459,8 +483,12 @@ program
         });
         info(`Dashboard running at http://localhost:${port}`);
       } else {
-        console.error('Starting MCP router...');
-        await router.start();
+        if (opts.project) {
+          console.error(`Starting MCP router with project filter '${opts.project}'...`);
+        } else {
+          console.error('Starting MCP router...');
+        }
+        await router.start(opts.project ?? null);
       }
     } catch (err) {
       error(err instanceof Error ? err.message : String(err));
@@ -470,6 +498,7 @@ program
   .addHelpText('after', `
 Examples:
   konduct start
+  konduct start --project app-dev
   konduct start --dashboard
   konduct start --dashboard --port 3000
   konduct start --transport http --port 3847
