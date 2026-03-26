@@ -236,6 +236,23 @@ const body = await c.req.parseFormData();
 const name = body.get('name') as string;
 ```
 
+## Release & Versioning
+
+### Update Flow
+1. **Increment Version (Required):** Always update `"version"` in `package.json` for every completed code change before finishing work.
+   - `patch` for bug fixes/small UX improvements
+   - `minor` for new backward-compatible features
+   - `major` for breaking changes
+2. **Build All:** Run `npm run build` to ensure both frontend and backend are in sync.
+3. **Re-install:** Run `npm link --force` to replace any existing global installation.
+
+### Global Link Safety
+If `npm link` fails with `EEXIST`, use:
+```bash
+npm link --force
+```
+The `npm run start -- install` command should ideally handle this internally in future iterations.
+
 ## Testing
 
 **Framework:** Vitest (same as Jest API, faster)

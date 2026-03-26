@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sun, Moon, Plus, Bell, Search, User } from 'lucide-react';
+import { Sun, Moon, Plus, Bell, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
 
@@ -21,13 +21,41 @@ export const Header: React.FC = () => {
   const showSearchResults = searchQuery.trim().length > 0;
   const topServerResults = filteredServers.slice(0, 5);
   const topToolResults = filteredTools.slice(0, 5);
+  const searchContainerRef = React.useRef<HTMLDivElement | null>(null);
+
+  React.useEffect(() => {
+    if (!showSearchResults) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (searchContainerRef.current && !searchContainerRef.current.contains(target)) {
+        setSearchQuery('');
+      }
+    };
+
+    window.addEventListener('mousedown', handlePointerDown);
+    return () => {
+      window.removeEventListener('mousedown', handlePointerDown);
+    };
+  }, [showSearchResults, setSearchQuery]);
+
+  const handleSearchEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== 'Enter') return;
+    if (topServerResults.length > 0) {
+      navigate('/servers');
+    } else if (topToolResults.length > 0) {
+      navigate('/tools');
+    }
+  };
 
   const goToServersWithSearch = () => {
     navigate('/servers');
+    setSearchQuery('');
   };
 
   const goToToolsWithSearch = () => {
     navigate('/tools');
+    setSearchQuery('');
   };
 
   const openLogsFromNotifications = async () => {
@@ -38,12 +66,13 @@ export const Header: React.FC = () => {
   return (
     <header className="h-20 bg-surface-light dark:bg-surface-dark border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-40 backdrop-blur-md bg-opacity-80 dark:bg-opacity-80">
       <div className="flex items-center gap-4 flex-1">
-        <div className="relative w-72">
+        <div className="relative w-72" ref={searchContainerRef}>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleSearchEnter}
             placeholder="Search servers, tools..."
             className="w-full bg-slate-100 dark:bg-slate-800/50 border-transparent focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-xl py-2 pl-10 pr-4 transition-all outline-none text-sm"
           />
@@ -57,6 +86,7 @@ export const Header: React.FC = () => {
                 topServerResults.map((server) => (
                   <button
                     key={server.id}
+                    type="button"
                     onClick={goToServersWithSearch}
                     className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                   >
@@ -75,6 +105,7 @@ export const Header: React.FC = () => {
                 topToolResults.map((tool) => (
                   <button
                     key={tool.id}
+                    type="button"
                     onClick={goToToolsWithSearch}
                     className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                   >
@@ -125,14 +156,7 @@ export const Header: React.FC = () => {
           <span>Add Server</span>
         </button>
 
-        {/* Profile */}
-        <button className="flex items-center gap-3 pl-2 group">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent p-0.5 group-hover:shadow-md transition-all">
-            <div className="w-full h-full rounded-[10px] bg-white dark:bg-slate-900 flex items-center justify-center">
-              <User size={20} className="text-primary" />
-            </div>
-          </div>
-        </button>
+        {/* Local mode: no user profile needed */}
       </div>
     </header>
   );
