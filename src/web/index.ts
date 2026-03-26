@@ -58,6 +58,24 @@ const BackupPayloadSchema = z.object({
 
 type BackupPayload = z.infer<typeof BackupPayloadSchema>;
 
+type ImportMode = 'merge' | 'replace';
+
+interface ImportSummary {
+  created: number;
+  updated: number;
+  skipped: number;
+  removed: number;
+  errors: number;
+}
+
+const emptySummary = (): ImportSummary => ({
+  created: 0,
+  updated: 0,
+  skipped: 0,
+  removed: 0,
+  errors: 0,
+});
+
 const getAppVersion = (): string => {
   const packageJsonPath = join(process.cwd(), 'package.json');
   if (!existsSync(packageJsonPath)) {
@@ -94,6 +112,84 @@ const buildBackupPayload = (): BackupPayload => {
   };
 
   return BackupPayloadSchema.parse(payload);
+};
+
+const analyzeImportImpact = (payload: BackupPayload, mode: ImportMode): { summary: ImportSummary; messages: string[] } => {
+  const summary = emptySummary();
+  const messages: string[] = [];
+
+  if (mode === 'replace') {
+    const currentServers = db.prepare('SELECT COUNT(*) as count FROM servers').get() as { count: number };
+    const currentTools = db.prepare('SELECT COUNT(*) as count FROM tools').get() as { count: number };
+    const currentProjects = db.prepare('SELECT COUNT(*) as count FROM projects').get() as { count: number };
+    const currentRelations = db.prepare('SELECT COUNT(*) as count FROM project_servers').get() as { count: number };
+
+    summary.removed = currentServers.count + currentTools.count + currentProjects.count + currentRelations.count;
+    summary.created =
+      payload.data.servers.length +
+      payload.data.tools.length +
+      payload.data.projects.length +
+      payload.data.projectServers.length;
+    messages.push('Replace mode will overwrite current configuration data.');
+    return { summary, messages };
+  }
+
+  const existingServersById = new Set(
+    (db.prepare('SELECT id FROM servers').all() as Array<Record<string, unknown>>).map((row) => row.id as string)
+  );
+  const existingServerNames = new Set(
+    (db.prepare('SELECT name FROM servers').all() as Array<Record<string, unknown>>).map((row) => row.name as string)
+  );
+  const existingToolsById = new Set(
+    (db.prepare('SELECT id FROM tools').all() as Array<Record<string, unknown>>).map((row) => row.id as string)
+  );
+  const existingProjectsById = new Set(
+    (db.prepare('SELECT id FROM projects').all() as Array<Record<string, unknown>>).map((row) => row.id as string)
+  );
+  const existingProjectNames = new Set(
+    (db.prepare('SELECT name FROM projects').all() as Array<Record<string, unknown>>).map((row) => row.name as string)
+  );
+
+  for (const server of payload.data.servers) {
+    if (existingServersById.has(server.id) || existingServerNames.has(server.name)) {
+      summary.updated += 1;
+    } else {
+      summary.created += 1;
+    }
+  }
+
+  for (const tool of payload.data.tools) {
+    if (existingToolsById.has(tool.id)) {
+      summary.updated += 1;
+    } else {
+      summary.created += 1;
+    }
+  }
+
+  for (const project of payload.data.projects) {
+    if (existingProjectsById.has(project.id) || existingProjectNames.has(project.name)) {
+      summary.updated += 1;
+    } else {
+      summary.created += 1;
+    }
+  }
+
+  const importProjectIds = new Set(payload.data.projects.map((project) => project.id));
+  const importServerIds = new Set(payload.data.servers.map((server) => server.id));
+
+  for (const relation of payload.data.projectServers) {
+    const projectKnown = importProjectIds.has(relation.projectId) || existingProjectsById.has(relation.projectId);
+    const serverKnown = importServerIds.has(relation.serverId) || existingServersById.has(relation.serverId);
+
+    if (!projectKnown || !serverKnown) {
+      summary.errors += 1;
+      messages.push(`Relation skipped: project '${relation.projectId}' or server '${relation.serverId}' not found.`);
+    } else {
+      summary.created += 1;
+    }
+  }
+
+  return { summary, messages };
 };
 
 app.use('*', logger());
@@ -255,6 +351,56 @@ app.get('/api/stats', (c) => {
 
 app.get('/api/settings/export', (c) => {
   return c.json(buildBackupPayload());
+});
+
+app.post('/api/settings/import', async (c) => {
+  const modeParam = c.req.query('mode');
+  const dryRunParam = c.req.query('dryRun');
+
+  const mode: ImportMode = modeParam === 'replace' ? 'replace' : 'merge';
+  const dryRun = dryRunParam !== 'false';
+
+  try {
+    const body = await c.req.json();
+    const payload = BackupPayloadSchema.parse(body);
+    const { summary, messages } = analyzeImportImpact(payload, mode);
+
+    if (dryRun) {
+      return c.json({
+        success: true,
+        mode,
+        dryRun: true,
+        summary,
+        messages: messages.length > 0 ? messages : ['Dry run completed successfully.'],
+      });
+    }
+
+    return c.json({
+      success: false,
+      mode,
+      dryRun: false,
+      summary,
+      messages: ['Apply mode not implemented yet. Use dryRun=true for preview.'],
+    }, 501);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return c.json({
+        success: false,
+        mode,
+        dryRun,
+        summary: emptySummary(),
+        messages: error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`),
+      }, 400);
+    }
+
+    return c.json({
+      success: false,
+      mode,
+      dryRun,
+      summary: emptySummary(),
+      messages: [error instanceof Error ? error.message : String(error)],
+    }, 500);
+  }
 });
 
 // Static files and SPA fallback
