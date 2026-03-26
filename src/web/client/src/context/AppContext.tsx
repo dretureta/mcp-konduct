@@ -8,6 +8,10 @@ interface AppContextType {
   tools: Tool[];
   projects: Project[];
   logs: LogEntry[];
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  filteredServers: Server[];
+  filteredTools: Tool[];
   stats: DashboardStats | null;
   isDark: boolean;
   toggleDarkMode: () => void;
@@ -23,6 +27,8 @@ interface AppContextType {
   createProject: (name: string) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
   fetchLogs: (params?: { limit?: number; server?: string; error?: boolean }) => Promise<void>;
+  isAddServerModalOpen: boolean;
+  setIsAddServerModalOpen: (open: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -36,6 +42,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAddServerModalOpen, setIsAddServerModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredServers = servers.filter(s => 
+    s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    s.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    s.transport.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredTools = tools.filter(t => 
+    t.toolName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.serverId.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const refreshData = useCallback(async () => {
     setIsLoading(true);
@@ -177,6 +196,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         createProject,
         deleteProject,
         fetchLogs,
+        searchQuery,
+        setSearchQuery,
+        filteredServers,
+        filteredTools,
+        isAddServerModalOpen,
+        setIsAddServerModalOpen,
       }}
     >
       {children}

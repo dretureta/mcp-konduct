@@ -10,14 +10,14 @@ import { EmptyState } from '../components/common/EmptyState.tsx';
 import { Tooltip } from '../components/common/Tooltip.tsx';
 
 export const Tools: React.FC = () => {
-  const { tools, servers, isLoading, toggleTool } = useAppContext();
-  const [searchQuery, setSearchQuery] = useState('');
+  const { filteredTools: tools, servers, isLoading, toggleTool, searchQuery: globalSearchQuery } = useAppContext();
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
   const [serverFilter, setServerFilter] = useState<string>('all');
 
   const serverMap = new Map(servers.map(s => [s.id, s.name]));
 
   const filteredTools = tools.filter(tool => {
-    const matchesSearch = tool.toolName.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = tool.toolName.toLowerCase().includes(localSearchQuery.toLowerCase());
     const matchesServer = serverFilter === 'all' || tool.serverId === serverFilter;
     return matchesSearch && matchesServer;
   });
@@ -47,8 +47,8 @@ export const Tools: React.FC = () => {
         <div className="relative flex-1">
           <Input
             placeholder="Search tools by name..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={localSearchQuery}
+            onChange={(e) => setLocalSearchQuery(e.target.value)}
             className="pl-12"
           />
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
@@ -91,7 +91,7 @@ export const Tools: React.FC = () => {
                     <EmptyState 
                       icon={Wrench}
                       title="No tools found"
-                      description={searchQuery || serverFilter !== 'all' 
+                      description={localSearchQuery || serverFilter !== 'all' || globalSearchQuery 
                         ? "We couldn't find any tools matching your search criteria. Try adjusting your filters."
                         : "No tools have been discovered yet. Connect a server to start importing capabilities."}
                       className="border-none bg-transparent p-0"
