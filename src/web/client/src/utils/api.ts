@@ -27,6 +27,9 @@ export const projectApi = {
   getProjects: () => api.get<Project[]>('/projects'),
   createProject: (name: string) => api.post(`/projects?name=${encodeURIComponent(name)}`),
   deleteProject: (id: string) => api.post(`/projects/${id}/delete`),
+  getProjectServers: (id: string) => api.get<Server[]>(`/projects/${id}/servers`),
+  addServerToProject: (projectId: string, serverId: string) => api.post(`/projects/${projectId}/servers/${serverId}/add`),
+  removeServerFromProject: (projectId: string, serverId: string) => api.post(`/projects/${projectId}/servers/${serverId}/remove`),
 };
 
 export const logApi = {

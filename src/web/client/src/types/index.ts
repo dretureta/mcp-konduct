@@ -36,6 +36,7 @@ export interface Project {
   name: string;
   description?: string;
   serverCount?: number;
+  createdAt?: string;
 }
 
 export interface LogEntry {
@@ -45,6 +46,7 @@ export interface LogEntry {
   tool_name: string;
   duration_ms: number;
   success: boolean | number;
+  error_message?: string;
 }
 
 export interface DashboardStats {
