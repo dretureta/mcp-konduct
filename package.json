@@ -1,12 +1,15 @@
 {
   "name": "mcp-konduct",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "MCP server proxy/aggregator for managing multiple downstream MCP servers",
   "type": "module",
   "bin": {
     "mcp-konduct": "./dist/cli/index.js",
     "konduct": "./dist/cli/index.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "tsx src/cli/index.ts",
     "build:client": "cd src/web/client && npm run build",

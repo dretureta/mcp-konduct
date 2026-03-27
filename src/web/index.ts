@@ -2,12 +2,17 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { serveStatic } from '@hono/node-server/serve-static';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { z } from 'zod';
 import { registry } from '../core/registry.js';
 import { getDbPath } from '../config/db.js';
 import { db } from '../config/db.js';
 import { readFileSync, existsSync } from 'fs';
+
+// Get directory of this file (works in ESM and after compilation)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = new Hono();
 
@@ -775,10 +780,9 @@ app.post('/api/settings/import', async (c) => {
   }
 });
 
-// Static files and SPA fallback
-const clientDist = join(process.cwd(), 'dist/web/client');
+const clientDist = join(__dirname, 'client');
 
-app.use('/*', serveStatic({ root: './dist/web/client' }));
+app.use('/*', serveStatic({ root: clientDist }));
 
 app.get('*', (c) => {
   const indexPath = join(clientDist, 'index.html');
