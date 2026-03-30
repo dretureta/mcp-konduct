@@ -49,6 +49,9 @@ CREATE TABLE IF NOT EXISTS project_servers (
 CREATE TABLE IF NOT EXISTS request_logs (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   timestamp TEXT DEFAULT (datetime('now')),
+  project_id TEXT,
+  project_name TEXT,
+  router_session_id TEXT,
   server_id TEXT,
   tool_name TEXT,
   duration_ms INTEGER,
@@ -60,4 +63,6 @@ CREATE TABLE IF NOT EXISTS request_logs (
 CREATE INDEX IF NOT EXISTS idx_tools_server_id ON tools(server_id);
 CREATE INDEX IF NOT EXISTS idx_request_logs_timestamp ON request_logs(timestamp);
 CREATE INDEX IF NOT EXISTS idx_request_logs_server_id ON request_logs(server_id);
+CREATE INDEX IF NOT EXISTS idx_request_logs_project_id ON request_logs(project_id);
+CREATE INDEX IF NOT EXISTS idx_request_logs_router_session_id ON request_logs(router_session_id);
 `;

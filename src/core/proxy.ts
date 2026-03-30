@@ -11,6 +11,12 @@ interface Connection {
   transport: StdioClientTransport | SSEClientTransport | StreamableHTTPClientTransport;
 }
 
+interface RequestContext {
+  projectId: string | null;
+  projectName: string | null;
+  sessionId: string | null;
+}
+
 const DEFAULT_TIMEOUT = 30000;
 const CLEANUP_TIMEOUT = 5 * 60 * 1000;
 
@@ -20,9 +26,18 @@ export class ConnectionPool {
   private toolIndex: Map<string, ToolIndexEntry> = new Map();
   private timeout = DEFAULT_TIMEOUT;
   private cleanupInterval: ReturnType<typeof setInterval> | null = null;
+  private requestContext: RequestContext = {
+    projectId: null,
+    projectName: null,
+    sessionId: null,
+  };
 
   setToolIndex(index: Map<string, ToolIndexEntry>): void {
     this.toolIndex = index;
+  }
+
+  setRequestContext(context: RequestContext): void {
+    this.requestContext = context;
   }
 
   async callTool(name: string, args: Record<string, unknown>): Promise<{ content: Array<{ type: 'text'; text: string }>; isError?: boolean }> {
@@ -119,9 +134,19 @@ export class ConnectionPool {
   ): void {
     const timestamp = new Date().toISOString();
     db.prepare(`
-      INSERT INTO request_logs (timestamp, server_id, tool_name, duration_ms, success, error_message)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(timestamp, serverId, toolName, durationMs, success ? 1 : 0, errorMessage || null);
+      INSERT INTO request_logs (timestamp, server_id, project_id, project_name, router_session_id, tool_name, duration_ms, success, error_message)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      timestamp,
+      serverId,
+      this.requestContext.projectId,
+      this.requestContext.projectName,
+      this.requestContext.sessionId,
+      toolName,
+      durationMs,
+      success ? 1 : 0,
+      errorMessage || null
+    );
   }
 
   startCleanup(): void {

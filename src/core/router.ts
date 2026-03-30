@@ -1,5 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { randomUUID } from 'crypto';
 import { z } from 'zod';
 import { registry } from './registry.js';
 import { aggregator } from './aggregator.js';
@@ -91,6 +92,26 @@ export class KonductRouter {
 
   async start(projectFilterName?: string | null): Promise<void> {
     this.projectFilterName = projectFilterName ?? null;
+
+    // Resolve project context for logging
+    const sessionId = randomUUID();
+    if (this.projectFilterName) {
+      const project = registry.getProjectByName(this.projectFilterName);
+      if (project) {
+        connectionPool.setRequestContext({
+          projectId: project.id,
+          projectName: project.name,
+          sessionId,
+        });
+        console.error(`[Router] Project logging: ${project.name} (${project.id}) session ${sessionId}`);
+      } else {
+        connectionPool.setRequestContext({ projectId: null, projectName: null, sessionId });
+      }
+    } else {
+      connectionPool.setRequestContext({ projectId: null, projectName: null, sessionId });
+      console.error(`[Router] Unscoped router session ${sessionId}`);
+    }
+
     await this.initialize();
     connectionPool.startCleanup();
 
