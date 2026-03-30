@@ -28,7 +28,7 @@ Konduct lets you orchestrate multiple Model Context Protocol (MCP) servers throu
 
 ## Requirements
 
-- **Node.js** 18 or higher
+- **Node.js** 20 or higher
 - **npm** (comes with Node.js)
 
 ## Installation

@@ -371,4 +371,4 @@ npm run dev -- logs --verbose
 
 ---
 
-**Last Updated:** 2026-03-26 | **Node:** 18+ | **Type:** ESM
+**Last Updated:** 2026-03-30 | **Node:** 20+ | **Type:** ESM
