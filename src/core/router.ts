@@ -41,6 +41,25 @@ export class KonductRouter {
       }
 
       const tools = aggregator.aggregateTools(enabledServers, allTools);
+
+      // Auto-discover tools for enabled servers that have no tools registered
+      const serversWithNoTools = enabledServers.filter(s => {
+        const serverTools = allTools.filter(t => t.serverId === s.id);
+        return serverTools.length === 0;
+      });
+
+      if (serversWithNoTools.length > 0) {
+        // Fire-and-forget discovery (don't block startup)
+        Promise.allSettled(
+          serversWithNoTools.map(s => {
+            console.error(`[Router] Auto-discovering tools for server: ${s.name}`);
+            return registry.discoverTools(s.id).catch(err =>
+              console.error(`[Router] Auto-discover failed for ${s.name}: ${err instanceof Error ? err.message : String(err)}`)
+            );
+          })
+        ).catch(() => {});
+      }
+
       this.toolDefinitions = tools;
 
       const toolIndex = aggregator.getToolMapping();
@@ -54,11 +73,10 @@ export class KonductRouter {
             description: tool.description || '',
             inputSchema: tool.inputSchema as Record<string, import('zod').ZodTypeAny>
           },
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          async (params: any) => {
+          async (params: Record<string, unknown>) => {
             try {
               const result = await connectionPool.callTool(tool.name, params);
-              return result as any;
+              return result;
             } catch (error) {
               return { content: [{ type: 'text' as const, text: `Error: ${error instanceof Error ? error.message : String(error)}` }], isError: true };
             }

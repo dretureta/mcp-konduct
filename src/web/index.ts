@@ -4,6 +4,7 @@ import { logger } from 'hono/logger';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { randomUUID } from 'crypto';
 import { z } from 'zod';
 import { registry } from '../core/registry.js';
 import { getDbPath } from '../config/db.js';
@@ -13,6 +14,9 @@ import { readFileSync, existsSync } from 'fs';
 // Get directory of this file (works in ESM and after compilation)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+// UUID validation helper
+const isUUID = (id: string): boolean => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
 const app = new Hono();
 
@@ -156,9 +160,10 @@ const analyzeImportImpact = (payload: BackupPayload, mode: ImportMode): { summar
   const existingServerNames = new Set(
     (db.prepare('SELECT name FROM servers').all() as Array<Record<string, unknown>>).map((row) => row.name as string)
   );
-  const existingToolsById = new Set(
-    (db.prepare('SELECT id FROM tools').all() as Array<Record<string, unknown>>).map((row) => row.id as string)
-  );
+  // Build tool lookup maps: id -> uuid and uuid -> id
+  const existingToolRows = (db.prepare('SELECT id, uuid FROM tools').all() as Array<Record<string, unknown>>);
+  const existingToolsById = new Set(existingToolRows.map((row) => row.id as string));
+  const existingToolsByUuid = new Set(existingToolRows.filter(row => row.uuid).map((row) => row.uuid as string));
   const existingProjectsById = new Set(
     (db.prepare('SELECT id FROM projects').all() as Array<Record<string, unknown>>).map((row) => row.id as string)
   );
@@ -175,7 +180,9 @@ const analyzeImportImpact = (payload: BackupPayload, mode: ImportMode): { summar
   }
 
   for (const tool of payload.data.tools) {
-    if (existingToolsById.has(tool.id)) {
+    const isExistingId = existingToolsById.has(tool.id);
+    const isExistingUuid = isUUID(tool.id) && existingToolsByUuid.has(tool.id);
+    if (isExistingId || isExistingUuid) {
       summary.updated += 1;
     } else {
       summary.created += 1;
@@ -315,25 +322,43 @@ const applyImportMerge = (payload: BackupPayload): { summary: ImportSummary; mes
     projectIdMap.set(project.id, targetProjectId);
   }
 
-  const existingToolsById = new Set(
-    (db.prepare('SELECT id FROM tools').all() as Array<Record<string, unknown>>).map((row) => row.id as string)
-  );
+  // Build tool lookup maps for UUID migration support
+  const existingToolRows = (db.prepare('SELECT id, uuid FROM tools').all() as Array<Record<string, unknown>>);
+  const existingToolsById = new Set(existingToolRows.map((row) => row.id as string));
+  const existingToolsByUuid = new Set(existingToolRows.filter(row => row.uuid).map((row) => row.uuid as string));
   const updateToolStmt = db.prepare('UPDATE tools SET server_id = ?, tool_name = ?, enabled = ? WHERE id = ?');
   const insertToolStmt = db.prepare(`
-    INSERT INTO tools (id, server_id, tool_name, enabled, discovered_at)
-    VALUES (?, ?, ?, ?, COALESCE(?, datetime('now')))
+    INSERT INTO tools (id, uuid, server_id, tool_name, enabled, discovered_at)
+    VALUES (?, ?, ?, ?, ?, COALESCE(?, datetime('now')))
   `);
 
   for (const tool of payload.data.tools) {
     const resolvedServerId = serverIdMap.get(tool.server_id) ?? tool.server_id;
-    const resolvedToolId = tool.id.includes('__') ? `${resolvedServerId}__${tool.tool_name}` : tool.id;
+    // Handle UUID migration: if tool.id is already a UUID, use it; otherwise generate new one
+    let resolvedToolId: string;
+    let resolvedUuid: string | undefined;
 
-    if (existingToolsById.has(resolvedToolId)) {
+    if (isUUID(tool.id) && existingToolsByUuid.has(tool.id)) {
+      // tool.id is an existing UUID
+      resolvedToolId = tool.id;
+      resolvedUuid = tool.id;
+    } else if (existingToolsById.has(tool.id)) {
+      // tool.id is an existing compound ID (legacy)
+      resolvedToolId = tool.id;
+    } else {
+      // New tool - generate UUID for both id and uuid
+      resolvedUuid = randomUUID();
+      // Keep compound ID format for backward compat with existing discovery logic
+      resolvedToolId = `${resolvedServerId}__${tool.tool_name}`;
+    }
+
+    if (existingToolsById.has(resolvedToolId) || (resolvedUuid && existingToolsByUuid.has(resolvedUuid))) {
       updateToolStmt.run(resolvedServerId, tool.tool_name, tool.enabled, resolvedToolId);
       summary.updated += 1;
     } else {
-      insertToolStmt.run(resolvedToolId, resolvedServerId, tool.tool_name, tool.enabled, tool.discovered_at ?? null);
+      insertToolStmt.run(resolvedToolId, resolvedUuid ?? null, resolvedServerId, tool.tool_name, tool.enabled, tool.discovered_at ?? null);
       existingToolsById.add(resolvedToolId);
+      if (resolvedUuid) existingToolsByUuid.add(resolvedUuid);
       summary.created += 1;
     }
   }

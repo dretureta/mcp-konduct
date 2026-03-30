@@ -29,6 +29,13 @@ for (const stmt of statements) {
   }
 }
 
+// Retain only last 30 days of request logs
+try {
+  db.prepare("DELETE FROM request_logs WHERE timestamp < datetime('now', '-30 days')").run();
+} catch {
+  // Non-critical: ignore retention errors
+}
+
 export function getDbPath(): string {
   return dbPath;
 }

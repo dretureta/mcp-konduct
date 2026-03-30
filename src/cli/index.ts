@@ -3,12 +3,18 @@
 import { Command } from 'commander';
 import { join } from 'path';
 import { homedir } from 'os';
-import { existsSync } from 'fs';
-import { execSync } from 'child_process';
+import { existsSync, readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import { execSync, spawnSync } from 'child_process';
 import { registry } from '../core/registry.js';
 import { router } from '../core/router.js';
 import { getDbPath, db } from '../config/db.js';
 import { success, error, warn, info, json, table } from './format.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const pkg = JSON.parse(readFileSync(join(__dirname, '../../package.json'), 'utf-8')) as { version: string };
 
 const program = new Command();
 
@@ -27,7 +33,7 @@ Examples:
 program
   .name('konduct')
   .description('MCP server proxy/aggregator')
-  .version('1.0.0')
+  .version(pkg.version)
   .option('-j, --json', 'Output as JSON')
   .option('-v, --verbose', 'Verbose output')
   .addHelpText('after', rootExamples);
@@ -644,12 +650,14 @@ program
 
       let outdatedRaw = '{}';
       try {
-        outdatedRaw = execSync('npm outdated --json', {
-          stdio: ['ignore', 'pipe', 'pipe']
-        }).toString() || '{}';
-      } catch (cmdErr) {
-        const err = cmdErr as { stdout?: Buffer };
-        outdatedRaw = err.stdout?.toString() || '{}';
+        const result = spawnSync('npm', ['outdated', '--json'], {
+          stdio: ['ignore', 'pipe', 'pipe'],
+          timeout: 5000,
+          encoding: 'utf-8'
+        });
+        outdatedRaw = result.stdout || '{}';
+      } catch {
+        outdatedRaw = '{}';
       }
 
       let outdatedCount = 0;

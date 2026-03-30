@@ -1,12 +1,14 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import type { ToolIndexEntry } from '../types/index.js';
 import { registry } from './registry.js';
 import { db } from '../config/db.js';
 
 interface Connection {
   client: Client;
-  transport: StdioClientTransport;
+  transport: StdioClientTransport | SSEClientTransport | StreamableHTTPClientTransport;
 }
 
 const DEFAULT_TIMEOUT = 30000;
@@ -23,7 +25,7 @@ export class ConnectionPool {
     this.toolIndex = index;
   }
 
-  async callTool(name: string, args: Record<string, unknown>): Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }> {
+  async callTool(name: string, args: Record<string, unknown>): Promise<{ content: Array<{ type: 'text'; text: string }>; isError?: boolean }> {
     const mapping = this.toolIndex.get(name);
     if (!mapping) {
       throw new Error(`Tool not found: ${name}`);
@@ -44,13 +46,13 @@ export class ConnectionPool {
       ]);
 
       this.logRequest(mapping.serverId, name, Date.now() - startTime, true);
-      return result as { content: Array<{ type: string; text: string }>; isError?: boolean };
+      return result as unknown as { content: Array<{ type: 'text'; text: string }>; isError?: boolean };
     } catch (error) {
       const duration = Date.now() - startTime;
       const message = error instanceof Error ? error.message : String(error);
       this.logRequest(mapping.serverId, name, duration, false, message);
       return {
-        content: [{ type: 'text', text: `Error: ${message}` }],
+        content: [{ type: 'text' as const, text: `Error: ${message}` }],
         isError: true
       };
     }
@@ -69,22 +71,28 @@ export class ConnectionPool {
       throw new Error(`Server not found: ${serverId}`);
     }
 
-    if (server.transport !== 'stdio') {
-      throw new Error(`Transport '${server.transport}' not supported yet`);
+    let transport: StdioClientTransport | SSEClientTransport | StreamableHTTPClientTransport;
+
+    if (server.transport === 'stdio') {
+      if (!server.command) {
+        throw new Error(`No command specified for server: ${server.name}`);
+      }
+      const args = server.args || [];
+      const env: Record<string, string> = { ...process.env as Record<string, string>, ...server.env };
+      transport = new StdioClientTransport({ command: server.command, args, env });
+    } else if (server.transport === 'sse') {
+      if (!server.url) {
+        throw new Error(`No URL specified for SSE server: ${server.name}`);
+      }
+      transport = new SSEClientTransport(new URL(server.url));
+    } else if (server.transport === 'streamable-http') {
+      if (!server.url) {
+        throw new Error(`No URL specified for streamable-http server: ${server.name}`);
+      }
+      transport = new StreamableHTTPClientTransport(new URL(server.url));
+    } else {
+      throw new Error(`Unsupported transport: ${(server as { transport: string }).transport}`);
     }
-
-    if (!server.command) {
-      throw new Error(`No command specified for server: ${server.name}`);
-    }
-
-    const args = server.args || [];
-    const env: Record<string, string> = { ...process.env as Record<string, string>, ...server.env };
-
-    const transport = new StdioClientTransport({
-      command: server.command,
-      args,
-      env
-    });
 
     const client = new Client({
       name: `konduct-downstream-${server.name}`,
