@@ -98,6 +98,7 @@ export const Logs: React.FC = () => {
               <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
                 <th className="px-8 py-5 text-left text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Timestamp</th>
                 <th className="px-8 py-5 text-left text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Server</th>
+                <th className="px-8 py-5 text-left text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Project</th>
                 <th className="px-8 py-5 text-left text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Tool</th>
                 <th className="px-8 py-5 text-left text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Duration</th>
                 <th className="px-8 py-5 text-right text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Status</th>
@@ -106,7 +107,7 @@ export const Logs: React.FC = () => {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono text-[13px]">
               {logs.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-8 py-20">
+                  <td colSpan={6} className="px-8 py-20">
                     <EmptyState 
                       icon={Clock}
                       title="No activity recorded"
@@ -138,6 +139,15 @@ export const Logs: React.FC = () => {
                       <Badge variant="secondary" className="font-mono">
                         {serverMap.get(log.server_id) || log.server_id.substring(0, 8)}
                       </Badge>
+                    </td>
+                    <td className="px-8 py-4">
+                      {log.project_name ? (
+                        <Badge variant="info" className="font-mono">
+                          {log.project_name}
+                        </Badge>
+                      ) : (
+                        <span className="text-slate-400 text-xs italic">unscoped</span>
+                      )}
                     </td>
                     <td className="px-8 py-4">
                       <span className="font-bold text-slate-700 dark:text-slate-300">
@@ -205,6 +215,15 @@ export const Logs: React.FC = () => {
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-1">Server</span>
                   <span className="font-bold text-slate-900 dark:text-white">{serverMap.get(selectedLog.server_id) || selectedLog.server_id}</span>
                 </div>
+                {selectedLog.project_name && (
+                  <div className="p-4 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-1">Project</span>
+                    <span className="font-bold text-slate-900 dark:text-white">{selectedLog.project_name}</span>
+                    {selectedLog.router_session_id && (
+                      <span className="text-xs text-slate-400 block mt-1">Session: {selectedLog.router_session_id.substring(0, 8)}...</span>
+                    )}
+                  </div>
+                )}
                 <div className="p-4 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-slate-800">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-1">Tool</span>
                   <span className="font-bold text-slate-900 dark:text-white">{selectedLog.tool_name}</span>
@@ -233,6 +252,8 @@ export const Logs: React.FC = () => {
                 <div className="p-4 bg-slate-900 text-slate-300 rounded-2xl font-mono text-sm overflow-x-auto">
                   <pre>{JSON.stringify({
                     server_id: selectedLog.server_id,
+                    project: selectedLog.project_name || null,
+                    session_id: selectedLog.router_session_id || null,
                     tool: selectedLog.tool_name,
                     success: !!Number(selectedLog.success),
                     error: selectedLog.error_message || null
