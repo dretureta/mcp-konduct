@@ -42,4 +42,3 @@ jobs:
       - run: npm ci
       - run: npm run build:server
       - run: npm run build:client
-        working-directory: src/web/client
