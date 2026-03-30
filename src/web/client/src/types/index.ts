@@ -63,6 +63,9 @@ export interface LogEntry {
   duration_ms: number;
   success: boolean | number;
   error_message?: string;
+  project_id?: string;
+  project_name?: string;
+  router_session_id?: string;
 }
 
 export interface DashboardStats {
