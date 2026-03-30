@@ -23,6 +23,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - run: npm ci
+      - run: npm ci --prefix src/web/client
 
       - run: npm run build
 
