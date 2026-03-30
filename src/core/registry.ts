@@ -1,6 +1,8 @@
 import { randomUUID } from 'crypto';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { db } from '../config/db.js';
 import type { Project, ServerConfig, ToolConfig } from '../types/index.js';
 
@@ -160,6 +162,9 @@ export class ServerRegistry {
     }
   }
 
+  // NOTE: Tool IDs use format `${serverId}__${toolName}` for upsert lookups.
+  // Server IDs are UUIDs (36 chars), separator is `__`. Known limitation: tool names
+  // containing `__` may cause edge-case collisions. Future: migrate to pure UUID IDs.
   private upsertTool(serverId: string, tool: DiscoveredTool): void {
     const id = `${serverId}__${tool.name}`;
     const existing = db.prepare('SELECT id FROM tools WHERE id = ?').get(id) as Record<string, unknown> | undefined;
@@ -229,22 +234,28 @@ export class ServerRegistry {
       throw new Error(`Server not found: ${serverId}`);
     }
 
-    if (server.transport !== 'stdio') {
-      throw new Error(`Discovery only supports stdio transport for now`);
+    let transport: StdioClientTransport | SSEClientTransport | StreamableHTTPClientTransport;
+
+    if (server.transport === 'stdio') {
+      if (!server.command) {
+        throw new Error(`No command specified for server: ${server.name}`);
+      }
+      const args = server.args || [];
+      const env: Record<string, string> = { ...process.env as Record<string, string>, ...server.env };
+      transport = new StdioClientTransport({ command: server.command, args, env });
+    } else if (server.transport === 'sse') {
+      if (!server.url) {
+        throw new Error(`No URL specified for SSE server: ${server.name}`);
+      }
+      transport = new SSEClientTransport(new URL(server.url));
+    } else if (server.transport === 'streamable-http') {
+      if (!server.url) {
+        throw new Error(`No URL specified for streamable-http server: ${server.name}`);
+      }
+      transport = new StreamableHTTPClientTransport(new URL(server.url));
+    } else {
+      throw new Error(`Unsupported transport: ${(server as { transport: string }).transport}`);
     }
-
-    if (!server.command) {
-      throw new Error(`No command specified for server: ${server.name}`);
-    }
-
-    const args = server.args || [];
-    const env: Record<string, string> = { ...process.env as Record<string, string>, ...server.env };
-
-    const transport = new StdioClientTransport({
-      command: server.command,
-      args,
-      env
-    });
 
     const client = new Client({
       name: `konduct-discovery-${server.name}`,
@@ -372,9 +383,30 @@ export class ServerRegistry {
   }
 
   getProjectTools(projectName: string): ToolConfig[] {
-    const servers = this.getProjectServers(projectName);
-    const serverIds = new Set(servers.map((server) => server.id));
-    return this.listAllTools().filter((tool) => serverIds.has(tool.serverId));
+    const project = this.getProjectByName(projectName);
+    if (!project) {
+      throw new Error(`Project not found: ${projectName}`);
+    }
+
+    const rows = db.prepare(`
+      SELECT t.*
+      FROM tools t
+      JOIN project_servers ps ON t.server_id = ps.server_id
+      WHERE ps.project_id = ?
+      ORDER BY t.server_id, t.tool_name
+    `).all(project.id) as Record<string, unknown>[];
+
+    return rows.map(row => ({
+      id: row.id as string,
+      serverId: row.server_id as string,
+      toolName: row.tool_name as string,
+      title: row.title as string | undefined,
+      description: row.description as string | undefined,
+      inputSchema: row.input_schema ? JSON.parse(row.input_schema as string) : undefined,
+      outputSchema: row.output_schema ? JSON.parse(row.output_schema as string) : undefined,
+      enabled: (row.enabled as number) === 1,
+      discoveredAt: row.discovered_at as string
+    }));
   }
 
   addServerToProject(projectId: string, serverId: string): void {

@@ -1,6 +1,6 @@
 {
   "name": "mcp-konduct",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "description": "MCP server proxy/aggregator for managing multiple downstream MCP servers",
   "type": "module",
   "bin": {

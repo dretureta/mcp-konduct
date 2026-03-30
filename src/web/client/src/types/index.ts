@@ -8,6 +8,7 @@ export interface Server {
   command?: string;
   args?: string[];
   url?: string;
+  env?: Record<string, string>;
   status: 'online' | 'offline' | 'error';
   lastSeen?: string;
 }
@@ -18,6 +19,7 @@ export interface CreateServerRequest {
   command?: string;
   args?: string[];
   url?: string;
+  env?: Record<string, string>;
 }
 
 export interface UpdateServerRequest extends Partial<CreateServerRequest> {

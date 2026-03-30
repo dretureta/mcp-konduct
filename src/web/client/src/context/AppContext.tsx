@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useDarkMode } from '../hooks/useDarkMode';
 import { Server, Tool, DashboardStats, CreateServerRequest, UpdateServerRequest, Project, LogEntry } from '../types';
 import { serverApi, statsApi, toolApi, projectApi, logApi } from '../utils/api';
+import { ToastMessage, ToastType } from '../components/common/Toast';
 
 interface AppContextType {
   servers: Server[];
@@ -30,6 +31,9 @@ interface AppContextType {
   isAddServerModalOpen: boolean;
   setIsAddServerModalOpen: (open: boolean) => void;
   discoveringServerId: string | null;
+  toasts: ToastMessage[];
+  addToast: (type: ToastType, message: string) => void;
+  removeToast: (id: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -46,6 +50,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isAddServerModalOpen, setIsAddServerModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [discoveringServerId, setDiscoveringServerId] = useState<string | null>(null);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const filteredServers = servers.filter(s => 
     s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -95,13 +100,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
+  const addToast = useCallback((type: ToastType, message: string) => {
+    const id = Math.random().toString(36).slice(2);
+    setToasts(prev => [...prev, { id, type, message }]);
+  }, []);
+
+  const removeToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
   const addServer = async (data: CreateServerRequest) => {
     try {
       await serverApi.createServer(data);
       await refreshData();
+      addToast('success', 'Server added successfully');
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to add server';
       setError(msg);
+      addToast('error', msg);
       throw err;
     }
   };
@@ -110,9 +126,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       await serverApi.updateServer(id, data);
       await refreshData();
+      addToast('success', 'Server updated successfully');
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to update server';
       setError(msg);
+      addToast('error', msg);
       throw err;
     }
   };
@@ -122,7 +140,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await serverApi.toggleServer(id);
       await refreshData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to toggle server');
+      const msg = err instanceof Error ? err.message : 'Failed to toggle server';
+      setError(msg);
+      addToast('error', msg);
     }
   };
 
@@ -131,7 +151,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await serverApi.deleteServer(id);
       await refreshData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete server');
+      const msg = err instanceof Error ? err.message : 'Failed to delete server';
+      setError(msg);
+      addToast('error', msg);
     }
   };
 
@@ -141,7 +163,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await serverApi.discoverTools(id);
       await refreshData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to discover tools');
+      const msg = err instanceof Error ? err.message : 'Failed to discover tools';
+      setError(msg);
+      addToast('error', msg);
     } finally {
       setDiscoveringServerId(null);
     }
@@ -152,7 +176,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await toolApi.toggleTool(id);
       await refreshData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to toggle tool');
+      const msg = err instanceof Error ? err.message : 'Failed to toggle tool';
+      setError(msg);
+      addToast('error', msg);
     }
   };
 
@@ -161,7 +187,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await projectApi.createProject(name);
       await refreshData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create project');
+      const msg = err instanceof Error ? err.message : 'Failed to create project';
+      setError(msg);
+      addToast('error', msg);
       throw err;
     }
   };
@@ -171,7 +199,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await projectApi.deleteProject(id);
       await refreshData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete project');
+      const msg = err instanceof Error ? err.message : 'Failed to delete project';
+      setError(msg);
+      addToast('error', msg);
     }
   };
 
@@ -208,6 +238,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isAddServerModalOpen,
         setIsAddServerModalOpen,
         discoveringServerId,
+        toasts,
+        addToast,
+        removeToast,
       }}
     >
       {children}
