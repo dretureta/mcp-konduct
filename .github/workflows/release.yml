@@ -37,6 +37,8 @@ jobs:
           generate_release_notes: true
           draft: true
           files: |
-            dist/**
+            dist/cli/**
+            dist/web/client/index.html
+            dist/web/client/assets/**
             package.json
             README.md
