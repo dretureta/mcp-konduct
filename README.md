@@ -10,7 +10,8 @@ Konduct lets you orchestrate multiple Model Context Protocol (MCP) servers throu
 - **Tool discovery & control** — Discover tools per server, enable/disable individually or globally
 - **Unified MCP endpoint** — Expose all servers as a single MCP stdio interface to upstream clients
 - **Project scoping** — Isolate server access by project name for multi-environment setups
-- **Built-in dashboard** — Optional web UI for management and inspection
+- **Project-level logging** — Trace which project made each tool call
+- **Built-in dashboard** — Optional web UI for management, inspection, and real-time logs
 - **CLI tools** — Full command-line interface for server, tool, and project management
 - **Health diagnostics** — Built-in `doctor` command for troubleshooting
 
@@ -18,13 +19,17 @@ Konduct lets you orchestrate multiple Model Context Protocol (MCP) servers throu
 
 - Multi-server MCP registry backed by SQLite
 - Tool discovery and enable/disable controls
+- UUID-based tool IDs (no collisions with `__` in names)
 - Name-collision handling via aggregation
 - MCP stdio router for upstream clients
 - Project-scoped MCP mode (`konduct start --project <name>`)
+- Project-level request logging with session tracking
 - Optional web dashboard mode (`--dashboard`)
 - Client config helpers (`konduct connect`)
 - Health checks via `konduct doctor`
 - Persistent storage with cross-platform support
+- 88 unit tests with Vitest
+- Automated GitHub releases on merge to main
 
 ## Requirements
 
@@ -33,9 +38,24 @@ Konduct lets you orchestrate multiple Model Context Protocol (MCP) servers throu
 
 ## Installation
 
-### Quick Setup (Global)
+### From GitHub Releases (Recommended)
+
+Download the latest release from GitHub:
 
 ```bash
+# Download and extract
+curl -L https://github.com/dretureta/mcp-konduct/releases/latest/download/mcp-konduct-VERSION.tar.gz | tar xz
+cd mcp-konduct-VERSION
+
+# Run directly
+./dist/cli/index.js doctor
+```
+
+### From Source
+
+```bash
+git clone https://github.com/dretureta/mcp-konduct.git
+cd mcp-konduct
 npm install
 npm run build
 node dist/cli/index.js install
@@ -325,6 +345,39 @@ Delete the database to start fresh:
 rm ~/.config/mcp-konduct/konduct.db
 konduct doctor  # Recreates schema
 ```
+
+## Changelog
+
+### v1.6.2 — Project-Level Logging & Release Fixes
+
+**New Features:**
+- **Project-level request logging** — Each tool call now logs which project made the request (`project_id`, `project_name`, `router_session_id`). Enables traceability across environments.
+- **UUID-based tool IDs** — Tool IDs migrated from compound format (`serverId__toolName`) to UUIDs, eliminating collision issues with tool names containing `__`.
+- **Auto-discover on startup** — Servers with no registered tools are automatically discovered when the router starts.
+- **ENV vars in ServerForm** — Web dashboard form now accepts environment variables per server (KEY=VALUE format).
+
+**Improvements:**
+- **Enhanced JSON Schema support** — `buildInputSchema` now handles `enum`, `anyOf`/`oneOf`, type arrays (`["string", "null"]`), and `nullable` fields.
+- **Toast notifications** — All error and success operations now surface user-facing feedback in the web dashboard.
+- **Dynamic version** — CLI reads version from `package.json` instead of hardcoding.
+- **Log retention** — Request logs older than 30 days are automatically purged on startup.
+
+**Bug Fixes:**
+- `doctor` command no longer blocks — replaced blocking `execSync` with `spawnSync` + 5s timeout.
+- `getProjectTools` now uses SQL JOIN instead of loading all tools into memory.
+- `getConnection` supports SSE and Streamable-HTTP transports (previously only stdio).
+- `discoverTools` supports SSE and Streamable-HTTP servers.
+
+**Infrastructure:**
+- **88 Vitest unit tests** covering `registry`, `aggregator`, and `proxy` modules.
+- **GitHub Actions CI** — runs on Node 20/22, build + test + coverage.
+- **Automated releases** — GitHub Release created on merge to `main` with `tar.gz` archive.
+
+---
+
+### v1.5.1 → Previous
+
+See [CHANGELOG.md](./CHANGELOG.md) for full history.
 
 ## Architecture
 
