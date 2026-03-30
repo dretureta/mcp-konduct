@@ -18,7 +18,7 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: npm ci && npm ci --prefix src/web/client
+        run: npm ci && npm install --prefix src/web/client
 
       - name: Build
         run: npm run build
