@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS servers (
 -- Tools individuales con toggle
 CREATE TABLE IF NOT EXISTS tools (
   id TEXT PRIMARY KEY,
+  uuid TEXT UNIQUE,
   server_id TEXT NOT NULL,
   tool_name TEXT NOT NULL,
   title TEXT,

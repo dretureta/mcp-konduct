@@ -153,6 +153,7 @@ export class ServerRegistry {
       { name: 'description', sql: 'ALTER TABLE tools ADD COLUMN description TEXT' },
       { name: 'input_schema', sql: 'ALTER TABLE tools ADD COLUMN input_schema TEXT' },
       { name: 'output_schema', sql: 'ALTER TABLE tools ADD COLUMN output_schema TEXT' },
+      { name: 'uuid', sql: 'ALTER TABLE tools ADD COLUMN uuid TEXT' },
     ];
 
     for (const column of requiredColumns) {
@@ -162,19 +163,19 @@ export class ServerRegistry {
     }
   }
 
-  // NOTE: Tool IDs use format `${serverId}__${toolName}` for upsert lookups.
-  // Server IDs are UUIDs (36 chars), separator is `__`. Known limitation: tool names
-  // containing `__` may cause edge-case collisions. Future: migrate to pure UUID IDs.
+  // Tool IDs are now UUIDs for collision-free uniqueness.
   private upsertTool(serverId: string, tool: DiscoveredTool): void {
     const id = `${serverId}__${tool.name}`;
-    const existing = db.prepare('SELECT id FROM tools WHERE id = ?').get(id) as Record<string, unknown> | undefined;
+    const existing = db.prepare('SELECT id, uuid FROM tools WHERE id = ?').get(id) as Record<string, unknown> | undefined;
 
     if (!existing) {
+      const uuid = randomUUID();
       db.prepare(`
-        INSERT INTO tools (id, server_id, tool_name, title, description, input_schema, output_schema, enabled)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+        INSERT INTO tools (id, uuid, server_id, tool_name, title, description, input_schema, output_schema, enabled)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
       `).run(
         id,
+        uuid,
         serverId,
         tool.name,
         tool.title ?? null,
@@ -185,25 +186,28 @@ export class ServerRegistry {
       return;
     }
 
+    // Keep existing UUID or generate new one if missing (backward compat)
+    const newUuid = (existing.uuid as string) ?? randomUUID();
     db.prepare(`
       UPDATE tools
-      SET title = ?, description = ?, input_schema = ?, output_schema = ?, discovered_at = datetime('now')
+      SET title = ?, description = ?, input_schema = ?, output_schema = ?, uuid = ?, discovered_at = datetime('now')
       WHERE id = ?
     `).run(
       tool.title ?? null,
       tool.description ?? null,
       tool.inputSchema ? JSON.stringify(tool.inputSchema) : null,
       tool.outputSchema ? JSON.stringify(tool.outputSchema) : null,
+      newUuid,
       id
     );
   }
 
   addTool(serverId: string, toolName: string): void {
-    const id = `${serverId}__${toolName}`;
+    const id = randomUUID();
     db.prepare(`
-      INSERT OR IGNORE INTO tools (id, server_id, tool_name, enabled)
-      VALUES (?, ?, ?, 1)
-    `).run(id, serverId, toolName);
+      INSERT OR IGNORE INTO tools (id, uuid, server_id, tool_name, enabled)
+      VALUES (?, ?, ?, ?, 1)
+    `).run(id, id, serverId, toolName);
   }
 
   removeTool(id: string): boolean {
