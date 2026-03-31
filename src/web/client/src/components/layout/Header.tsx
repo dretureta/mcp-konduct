@@ -7,7 +7,6 @@ export const Header: React.FC = () => {
   const {
     isDark,
     toggleDarkMode,
-    setIsAddServerModalOpen,
     logs,
     searchQuery,
     setSearchQuery,
@@ -149,7 +148,7 @@ export const Header: React.FC = () => {
 
         {/* Add Server Button */}
         <button 
-          onClick={() => setIsAddServerModalOpen(true)}
+          onClick={() => navigate('/servers')}
           className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 active:scale-95"
         >
           <Plus size={18} />

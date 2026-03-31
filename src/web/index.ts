@@ -498,22 +498,54 @@ app.post('/api/servers', async (c) => {
   return c.json(registry.getServer(id));
 });
 
+// Schema for server update request - shared validation for create/edit normalization
+const ServerUpdateSchema = z.object({
+  name: z.string().min(1),
+  transport: z.enum(['stdio', 'sse', 'streamable-http']),
+  command: z.string().nullable().optional(),
+  args: z.array(z.string()).nullable().optional(),
+  env: z.record(z.string(), z.string()).nullable().optional(),
+  url: z.string().nullable().optional(),
+  enabled: z.boolean().optional(),
+});
+
 app.post('/api/servers/:id/update', async (c) => {
   const id = c.req.param('id');
-  const data = await c.req.json();
-  const stmt = db.prepare(`
-    UPDATE servers 
-    SET name = ?, transport = ?, command = ?, args = ?, url = ?
-    WHERE id = ?
-  `);
-  stmt.run(
-    data.name,
-    data.transport,
-    data.command || null,
-    data.args ? JSON.stringify(data.args) : null,
-    data.url || null,
-    id
-  );
+  
+  // Validate existing server exists
+  const existing = registry.getServer(id);
+  if (!existing) {
+    return c.json({ error: 'Server not found' }, 404);
+  }
+
+  const raw = await c.req.json();
+  const parsed = ServerUpdateSchema.parse(raw);
+
+  // Normalize payload: clear transport-specific fields per design spec
+  // stdio: keep command, args, env; clear url
+  // sse/streamable-http: keep url, env; clear command, args
+  const normalized: Record<string, unknown> = {
+    name: parsed.name,
+    transport: parsed.transport,
+  };
+
+  if (parsed.transport === 'stdio') {
+    normalized.command = parsed.command ?? null;
+    normalized.args = parsed.args ?? null;
+    normalized.env = parsed.env ?? null;
+    normalized.url = null;
+  } else {
+    normalized.command = null;
+    normalized.args = null;
+    normalized.env = parsed.env ?? null;
+    normalized.url = parsed.url ?? null;
+  }
+
+  if (parsed.enabled !== undefined) {
+    normalized.enabled = parsed.enabled;
+  }
+
+  registry.updateServer(id, normalized);
   return c.json(registry.getServer(id));
 });
 

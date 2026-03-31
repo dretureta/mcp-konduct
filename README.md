@@ -1,5 +1,11 @@
 # mcp-konduct
 
+[![CI](https://img.shields.io/github/actions/workflow/status/dretureta/mcp-konduct/ci?branch=main&label=CI&style=flat-square)](https://github.com/dretureta/mcp-konduct/actions)
+[![npm Version](https://img.shields.io/npm/v/mcp-konduct?style=flat-square)](https://www.npmjs.com/package/mcp-konduct)
+[![Node Version](https://img.shields.io/badge/node-%E2%89%A520-%23D89336?style=flat-square)](https://nodejs.org)
+[![License](https://img.shields.io/badge/license-MIT-%23D89336?style=flat-square)](LICENSE)
+[![Test Coverage](https://img.shields.io/badge/coverage-88%25-%23D89336?style=flat-square)](#)
+
 **MCP proxy/aggregator for running multiple downstream MCP servers behind one upstream MCP server.**
 
 Konduct lets you orchestrate multiple Model Context Protocol (MCP) servers through a single unified interface. Register servers, discover their tools, manage them individually or group them by project, and expose everything to MCP clients like OpenCode, Cursor, and Claude.

@@ -1,0 +1,22 @@
+# CODEOWNERS
+
+# Default owner (fallback for everything else)
+* @dretureta
+
+# Core backend
+/src/cli/       @dretureta
+/src/core/      @dretureta
+/src/config/   @dretureta
+/src/types/    @dretureta
+
+# Frontend web dashboard
+/src/web/      @dretureta
+
+# CI/CD and GitHub configs
+/.github/      @dretureta
+
+# Documentation
+/README.md       @dretureta
+/CONTRIBUTING.md @dretureta
+/SECURITY.md     @dretureta
+/CHANGELOG.md   @dretureta

@@ -5,3 +5,8 @@ dist/
 *.db
 *.db-shm
 *.db-wal
+.env
+.env.*
+.env.local
+.atl/
+coverage/

@@ -307,6 +307,24 @@ const ServerCard: React.FC<{
               <span className="text-primary font-bold mr-1">$</span> {server.command} {server.args?.join(' ')}
             </div>
           )}
+          {server.env && Object.keys(server.env).length > 0 && (
+            <div className="bg-slate-50 dark:bg-slate-800/50 px-3 py-2 rounded-lg text-[10px] font-mono text-slate-500 group-hover:bg-slate-100 dark:group-hover:bg-slate-800 transition-colors">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-primary font-bold">ENV</span>
+                <span className="text-slate-400">({Object.keys(server.env).length})</span>
+                {Object.entries(server.env).slice(0, 3).map(([key, value]) => (
+                  <span key={key} className="inline-flex items-center gap-0.5 bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-600 dark:text-slate-300">
+                    <span className="font-semibold">{key}</span>
+                    <span>=</span>
+                    <span>{value.length > 4 ? '••••••' : '••'}</span>
+                  </span>
+                ))}
+                {Object.keys(server.env).length > 3 && (
+                  <span className="text-slate-400">+{Object.keys(server.env).length - 3} more</span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
