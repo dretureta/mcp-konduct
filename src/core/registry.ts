@@ -84,11 +84,15 @@ export class ServerRegistry {
     }
     if (partial.args !== undefined) {
       updates.push('args = ?');
-      values.push(JSON.stringify(partial.args) ?? null);
+      // Empty arrays persist as NULL, not '[]'
+      values.push(Array.isArray(partial.args) && partial.args.length === 0 ? null : JSON.stringify(partial.args) ?? null);
     }
     if (partial.env !== undefined) {
       updates.push('env = ?');
-      values.push(JSON.stringify(partial.env) ?? null);
+      // Empty objects persist as NULL, not '{}'
+      const envValue = partial.env;
+      const isEmptyEnv = envValue !== null && typeof envValue === 'object' && Object.keys(envValue).length === 0;
+      values.push(isEmptyEnv ? null : JSON.stringify(envValue) ?? null);
     }
     if (partial.url !== undefined) {
       updates.push('url = ?');

@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { SidebarProvider } from './components/layout/Sidebar';
-import { AddServerModal } from './components/servers/AddServerModal';
 import { MainLayout } from './components/layout/MainLayout';
 import { Dashboard } from './pages/Dashboard';
 import { Servers } from './pages/Servers';
@@ -18,7 +17,6 @@ const AppShell: React.FC = () => {
   return (
     <>
       <SidebarProvider>
-        <AddServerModal />
         <Router>
           <Routes>
             <Route path="/" element={<MainLayout />}>

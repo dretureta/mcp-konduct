@@ -264,4 +264,58 @@ describe('ServerRegistry', () => {
       expect(result[0].toolName).toBe('tool1');
     });
   });
+
+  describe('updateServer', () => {
+    it('should update server name', () => {
+      registry.updateServer('server-id', { name: 'new-name' });
+      expect(mockRun).toHaveBeenCalled();
+    });
+
+    it('should update server with env and persist it as JSON', () => {
+      const env = { API_KEY: 'secret123', DEBUG: 'true' };
+      registry.updateServer('server-id', { env });
+      
+      // Verify run was called with the serialized env
+      const runCall = mockRun.mock.calls[0];
+      expect(runCall).toContain(JSON.stringify(env));
+    });
+
+    it('should write null when env is an empty object', () => {
+      registry.updateServer('server-id', { env: {} });
+      
+      const runCall = mockRun.mock.calls[0];
+      // Empty env should be persisted as null, not '{}'
+      expect(runCall).toContain(null);
+    });
+
+    it('should write null when args is an empty array', () => {
+      registry.updateServer('server-id', { args: [] });
+      
+      const runCall = mockRun.mock.calls[0];
+      // Empty args should be persisted as null, not '[]'
+      expect(runCall).toContain(null);
+    });
+
+    it('should update transport and clear irrelevant fields for stdio', () => {
+      registry.updateServer('server-id', {
+        transport: 'stdio',
+        command: 'npx',
+        args: ['-y', 'server'],
+        url: 'http://localhost:3000', // should be cleared for stdio
+      });
+      
+      expect(mockRun).toHaveBeenCalled();
+    });
+
+    it('should update enabled flag', () => {
+      registry.updateServer('server-id', { enabled: false });
+      expect(mockRun).toHaveBeenCalled();
+    });
+
+    it('should do nothing when called with empty partial', () => {
+      mockRun.mockClear();
+      registry.updateServer('server-id', {});
+      expect(mockRun).not.toHaveBeenCalled();
+    });
+  });
 });

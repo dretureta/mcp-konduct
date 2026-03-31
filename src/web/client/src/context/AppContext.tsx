@@ -28,8 +28,6 @@ interface AppContextType {
   createProject: (name: string) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
   fetchLogs: (params?: { limit?: number; server?: string; error?: boolean }) => Promise<void>;
-  isAddServerModalOpen: boolean;
-  setIsAddServerModalOpen: (open: boolean) => void;
   discoveringServerId: string | null;
   toasts: ToastMessage[];
   addToast: (type: ToastType, message: string) => void;
@@ -47,7 +45,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isAddServerModalOpen, setIsAddServerModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [discoveringServerId, setDiscoveringServerId] = useState<string | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -235,8 +232,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSearchQuery,
         filteredServers,
         filteredTools,
-        isAddServerModalOpen,
-        setIsAddServerModalOpen,
         discoveringServerId,
         toasts,
         addToast,
