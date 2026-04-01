@@ -21,6 +21,7 @@ const BackupServerSchema = z.object({
 
 const BackupToolSchema = z.object({
   id: z.string(),
+  uuid: z.string().nullable().optional(),
   server_id: z.string(),
   tool_name: z.string(),
   enabled: z.number(),
@@ -163,7 +164,8 @@ export const analyzeImportImpact = (payload: BackupPayload, mode: ImportMode): {
 
   for (const tool of payload.data.tools) {
     const isExistingId = existingToolsById.has(tool.id);
-    const isExistingUuid = isUUID(tool.id) && existingToolsByUuid.has(tool.id);
+    const portableUuid = tool.uuid ?? tool.id;
+    const isExistingUuid = isUUID(portableUuid) && existingToolsByUuid.has(portableUuid);
     if (isExistingId || isExistingUuid) {
       summary.updated += 1;
     } else {
@@ -305,14 +307,16 @@ const applyImportMerge = (payload: BackupPayload): { summary: ImportSummary; mes
       const resolvedServerId = serverIdMap.get(tool.server_id) ?? tool.server_id;
       let resolvedToolId: string;
       let resolvedUuid: string | undefined;
+      const portableUuid = tool.uuid ?? tool.id;
 
-      if (isUUID(tool.id) && existingToolsByUuid.has(tool.id)) {
-        resolvedToolId = existingToolIdByUuid.get(tool.id) ?? tool.id;
-        resolvedUuid = tool.id;
+      if (isUUID(portableUuid) && existingToolsByUuid.has(portableUuid)) {
+        resolvedToolId = existingToolIdByUuid.get(portableUuid) ?? tool.id;
+        resolvedUuid = portableUuid;
       } else if (existingToolsById.has(tool.id)) {
         resolvedToolId = tool.id;
+        resolvedUuid = tool.uuid ?? undefined;
       } else {
-        resolvedUuid = randomUUID();
+        resolvedUuid = tool.uuid ?? randomUUID();
         resolvedToolId = `${resolvedServerId}__${tool.tool_name}`;
       }
 
@@ -376,8 +380,8 @@ const applyImportReplace = (payload: BackupPayload): { summary: ImportSummary; m
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now')), COALESCE(?, datetime('now')))
     `);
     const insertToolStmt = db.prepare(`
-      INSERT INTO tools (id, server_id, tool_name, enabled, discovered_at)
-      VALUES (?, ?, ?, ?, COALESCE(?, datetime('now')))
+      INSERT INTO tools (id, uuid, server_id, tool_name, enabled, discovered_at)
+      VALUES (?, ?, ?, ?, ?, COALESCE(?, datetime('now')))
     `);
     const insertProjectStmt = db.prepare(`
       INSERT INTO projects (id, name, description, created_at)
@@ -397,7 +401,7 @@ const applyImportReplace = (payload: BackupPayload): { summary: ImportSummary; m
         continue;
       }
 
-      insertToolStmt.run(tool.id, tool.server_id, tool.tool_name, tool.enabled, tool.discovered_at ?? null);
+      insertToolStmt.run(tool.id, tool.uuid ?? null, tool.server_id, tool.tool_name, tool.enabled, tool.discovered_at ?? null);
       summary.created += 1;
     }
 

@@ -106,6 +106,7 @@ export interface BackupPayload {
     }>;
     tools: Array<{
       id: string;
+      uuid?: string | null;
       server_id: string;
       tool_name: string;
       enabled: number;

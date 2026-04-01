@@ -74,6 +74,26 @@ describe('settings-backup-service', () => {
     expect(payload.data.servers[0].env).toBe('{"API_KEY":"secret"}');
   });
 
+  it('includes tools.uuid in exported backup payloads', () => {
+    mockAll
+      .mockReturnValueOnce([])
+      .mockReturnValueOnce([
+        {
+          id: 'local-tool-id',
+          uuid: '880e8400-e29b-41d4-a716-446655440003',
+          server_id: 'server-1',
+          tool_name: 'search',
+          enabled: 1,
+        },
+      ])
+      .mockReturnValueOnce([])
+      .mockReturnValueOnce([]);
+
+    const payload = buildBackupPayload(true);
+
+    expect(payload.data.tools[0].uuid).toBe('880e8400-e29b-41d4-a716-446655440003');
+  });
+
   it('counts duplicate merge relations as skipped during dry-run analysis', () => {
     mockAll
       .mockReturnValueOnce([{ id: 'server-1' }])
@@ -210,6 +230,48 @@ describe('settings-backup-service', () => {
 
       expect(result.summary.errors).toBe(1);
       expect(result.messages.some(m => m.includes("Tool skipped: server 'unknown-server' not found"))).toBe(true);
+    });
+
+    it('preserves tools.uuid during replace imports', () => {
+      mockAll.mockReset();
+      mockGet.mockReset();
+      mockRun.mockReset();
+
+      mockGet.mockReturnValue({ count: 0 });
+      mockAll.mockReturnValue([]);
+
+      let toolInsertArgs: unknown[] | undefined;
+      mockRun.mockImplementation((...args: unknown[]) => {
+        if (args.length === 6 && args[0] === 'local-tool-id') {
+          toolInsertArgs = args;
+        }
+        return { changes: 1 };
+      });
+
+      const payload = {
+        version: 'konduct-backup-v1' as const,
+        exportedAt: '2026-03-31T00:00:00.000Z',
+        appVersion: '1.6.6',
+        data: {
+          servers: [{ id: 's1', name: 'Test', transport: 'stdio' as const, enabled: 1 }],
+          tools: [
+            {
+              id: 'local-tool-id',
+              uuid: '880e8400-e29b-41d4-a716-446655440003',
+              server_id: 's1',
+              tool_name: 'search',
+              enabled: 1,
+            },
+          ],
+          projects: [],
+          projectServers: [],
+        },
+      };
+
+      applyImportPayload(payload, 'replace');
+
+      expect(toolInsertArgs).toBeDefined();
+      expect(toolInsertArgs?.[1]).toBe('880e8400-e29b-41d4-a716-446655440003');
     });
   });
 
