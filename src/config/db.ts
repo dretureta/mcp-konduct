@@ -54,6 +54,34 @@ if (!existingIndexes.has('idx_request_logs_router_session_id')) {
   db.exec('CREATE INDEX IF NOT EXISTS idx_request_logs_router_session_id ON request_logs(router_session_id)');
 }
 
+function hasDuplicateValues(table: 'servers' | 'projects', column: 'name'): boolean {
+  const duplicate = db.prepare(`
+    SELECT ${column}
+    FROM ${table}
+    GROUP BY ${column}
+    HAVING COUNT(*) > 1
+    LIMIT 1
+  `).get() as Record<string, unknown> | undefined;
+
+  return duplicate !== undefined;
+}
+
+function ensureUniqueIndex(indexName: string, table: 'servers' | 'projects', column: 'name'): void {
+  if (existingIndexes.has(indexName)) {
+    return;
+  }
+
+  if (hasDuplicateValues(table, column)) {
+    console.warn(`Skipping ${indexName}: duplicate ${table}.${column} values already exist`);
+    return;
+  }
+
+  db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS ${indexName} ON ${table}(${column})`);
+}
+
+ensureUniqueIndex('idx_servers_name_unique', 'servers', 'name');
+ensureUniqueIndex('idx_projects_name_unique', 'projects', 'name');
+
 // Retain only last 30 days of request logs
 try {
   db.prepare("DELETE FROM request_logs WHERE timestamp < datetime('now', '-30 days')").run();

@@ -39,7 +39,7 @@ export const toolApi = {
 
 export const projectApi = {
   getProjects: () => api.get<Project[]>('/projects'),
-  createProject: (name: string) => api.post(`/projects?name=${encodeURIComponent(name)}`),
+  createProject: (name: string, description?: string) => api.post('/projects', { name, description }),
   deleteProject: (id: string) => api.post(`/projects/${id}/delete`),
   getProjectServers: (id: string) => api.get<Server[]>(`/projects/${id}/servers`),
   getProjectFull: (id: string) => api.get<ProjectFullResponse>(`/projects/${id}/full`),

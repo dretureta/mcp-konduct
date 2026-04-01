@@ -318,4 +318,35 @@ describe('ServerRegistry', () => {
       expect(mockRun).not.toHaveBeenCalled();
     });
   });
+
+  describe('createProject', () => {
+    it('should create a project and return an ID', () => {
+      mockRun.mockReturnValue({ changes: 1 });
+
+      const id = registry.createProject('test-project', 'A test project');
+
+      expect(id).toBeDefined();
+      expect(typeof id).toBe('string');
+      expect(id.length).toBe(36); // UUID format
+      expect(mockRun).toHaveBeenCalled();
+    });
+
+    it('should reject duplicate project names', () => {
+      // First call: check if name exists
+      mockGet.mockReturnValueOnce({ id: 'existing-id', name: 'duplicate-project' });
+      
+      expect(() => registry.createProject('duplicate-project')).toThrow(
+        "Project with name 'duplicate-project' already exists"
+      );
+    });
+
+    it('should create project without description', () => {
+      mockRun.mockReturnValue({ changes: 1 });
+
+      const id = registry.createProject('simple-project');
+
+      expect(id).toBeDefined();
+      expect(mockRun).toHaveBeenCalled();
+    });
+  });
 });

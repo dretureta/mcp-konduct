@@ -2,7 +2,7 @@ export const CREATE_TABLES_SQL = `
 -- Servidores MCP registrados
 CREATE TABLE IF NOT EXISTS servers (
   id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
+  name TEXT NOT NULL UNIQUE,
   transport TEXT NOT NULL,
   command TEXT,
   args TEXT,
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS tools (
 -- Proyectos (agrupaciones de servidores)
 CREATE TABLE IF NOT EXISTS projects (
   id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
+  name TEXT NOT NULL UNIQUE,
   description TEXT,
   created_at TEXT DEFAULT (datetime('now'))
 );

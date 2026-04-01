@@ -67,6 +67,13 @@ export class ServerRegistry {
   }
 
   updateServer(id: string, partial: Partial<ServerConfig>): void {
+    if (partial.name !== undefined) {
+      const existing = db.prepare('SELECT id FROM servers WHERE name = ? AND id != ?').get(partial.name, id);
+      if (existing) {
+        throw new Error(`Server with name '${partial.name}' already exists`);
+      }
+    }
+
     const updates: string[] = [];
     const values: unknown[] = [];
 
@@ -324,6 +331,11 @@ export class ServerRegistry {
   }
 
   createProject(name: string, description?: string): string {
+    const existing = db.prepare('SELECT id FROM projects WHERE name = ?').get(name);
+    if (existing) {
+      throw new Error(`Project with name '${name}' already exists`);
+    }
+
     const id = randomUUID();
     db.prepare(`
       INSERT INTO projects (id, name, description)
