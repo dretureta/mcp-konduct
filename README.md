@@ -4,95 +4,64 @@
 [![npm Version](https://img.shields.io/npm/v/mcp-konduct?style=flat-square)](https://www.npmjs.com/package/mcp-konduct)
 [![Node Version](https://img.shields.io/badge/node-%E2%89%A520-%23D89336?style=flat-square)](https://nodejs.org)
 [![License](https://img.shields.io/badge/license-MIT-%23D89336?style=flat-square)](LICENSE)
-[![Test Coverage](https://img.shields.io/badge/coverage-88%25-%23D89336?style=flat-square)](#)
 
-**MCP proxy/aggregator for running multiple downstream MCP servers behind one upstream MCP server.**
+**A local control plane for managing multiple MCP servers behind one clean interface.**
 
-Konduct lets you orchestrate multiple Model Context Protocol (MCP) servers through a single unified interface. Register servers, discover their tools, manage them individually or group them by project, and expose everything to MCP clients like OpenCode, Cursor, and Claude.
+`mcp-konduct` lets you register downstream MCP servers, discover and control their tools, group them by project, inspect activity in a web dashboard, and expose everything through a single upstream MCP entrypoint.
 
-## What It Does
+## Why use it
 
-- **Multi-server registry** — Register and manage multiple MCP servers (stdio, SSE, streamable-http)
-- **Tool discovery & control** — Discover tools per server, enable/disable individually or globally
-- **Unified MCP endpoint** — Expose all servers as a single MCP stdio interface to upstream clients
-- **Project scoping** — Isolate server access by project name for multi-environment setups
-- **Project-level logging** — Trace which project made each tool call
-- **Built-in dashboard** — Optional web UI for management, inspection, and real-time logs
-- **CLI tools** — Full command-line interface for server, tool, and project management
-- **Health diagnostics** — Built-in `doctor` command for troubleshooting
+When you work with several MCP servers, things get messy quickly:
 
-## Features
+- client config gets duplicated
+- tool names can collide
+- some tools should only be visible in certain contexts
+- debugging requests across projects is painful
 
-- Multi-server MCP registry backed by SQLite
-- Tool discovery and enable/disable controls
-- UUID-based tool IDs (no collisions with `__` in names)
-- Name-collision handling via aggregation
-- MCP stdio router for upstream clients
-- Project-scoped MCP mode (`konduct start --project <name>`)
-- Project-level request logging with session tracking
-- Optional web dashboard mode (`--dashboard`)
-- Client config helpers (`konduct connect`)
-- Health checks via `konduct doctor`
-- Persistent storage with cross-platform support
-- 88 unit tests with Vitest
-- Automated GitHub releases on merge to main
+`mcp-konduct` gives you one place to manage that.
 
-## Requirements
+## What it can do
 
-- **Node.js** 20 or higher
-- **npm** (comes with Node.js)
+- Register MCP servers over **stdio**, **SSE**, or **streamable-http**
+- Discover tools and enable or disable them individually
+- Expose all configured servers as a single upstream MCP server
+- Scope tool access by **project**
+- Track request logs with project/session context
+- Import and export configuration backups
+- Manage everything from a **CLI** or the built-in **web dashboard**
+
+> [!NOTE]
+> Recent hardening work added stricter validation, safer secret handling in API responses and exports, transactional import behavior, and stronger backup identity preservation for tools.
 
 ## Installation
 
-### From GitHub Releases (Recommended)
-
-Download the latest release from GitHub:
+### From npm
 
 ```bash
-# Download and extract
-curl -L https://github.com/dretureta/mcp-konduct/releases/latest/download/mcp-konduct-VERSION.tar.gz | tar xz
-cd mcp-konduct-VERSION
-
-# Run directly
-./dist/cli/index.js doctor
+npm install -g mcp-konduct
 ```
 
-### From Source
+You can then use either command:
+
+```bash
+konduct doctor
+# or
+mcp-konduct doctor
+```
+
+### From source
 
 ```bash
 git clone https://github.com/dretureta/mcp-konduct.git
 cd mcp-konduct
 npm install
 npm run build
-node dist/cli/index.js install
+npm link --force
 ```
 
-Then use `konduct` from anywhere:
+## Quick start
 
-```bash
-konduct doctor
-```
-
-### Local Development
-
-```bash
-npm install
-npm run build
-```
-
-Run commands with:
-
-```bash
-npm run start -- <command>
-# or
-npm run dev -- <command>
-```
-
-## Quick Start
-
-### 1. Add a Server
-
-Register a downstream MCP server (example: filesystem):
+### 1. Add a server
 
 ```bash
 konduct server add \
@@ -102,9 +71,7 @@ konduct server add \
   --args -y @modelcontextprotocol/server-filesystem /tmp
 ```
 
-### 2. Discover Tools
-
-List available servers and their tools:
+### 2. Discover its tools
 
 ```bash
 konduct server list
@@ -112,19 +79,58 @@ konduct server discover <server-id>
 konduct tool list
 ```
 
-### 3. Start Konduct
-
-Run as MCP stdio server to expose tools upstream:
+### 3. Start the upstream MCP server
 
 ```bash
 konduct start
 ```
 
-Your client can now connect and use all discovered tools.
+Your MCP client can now connect to `konduct` instead of connecting to each downstream server separately.
 
-## Core Commands
+## Common workflows
 
-### Server Management
+### Run with project scoping
+
+```bash
+konduct project create --name Dev --description "Development tools"
+konduct project add-server <project-id> <server-id>
+konduct start --project Dev
+```
+
+Only servers linked to that project will be exposed upstream.
+
+### Launch the dashboard
+
+```bash
+konduct start --dashboard --port 3847
+```
+
+Then open:
+
+```text
+http://localhost:3847
+```
+
+The dashboard includes:
+
+- server registration and editing
+- tool discovery and toggling
+- project management
+- scoped project views
+- request log inspection
+- backup import/export
+
+### Generate client config
+
+```bash
+konduct connect opencode
+konduct connect cursor --project Dev
+konduct connect claude --install
+```
+
+## Key commands
+
+### Server management
 
 ```bash
 konduct server add --name <name> --transport stdio --command <cmd> --args <args...>
@@ -135,16 +141,15 @@ konduct server disable <server-id>
 konduct server remove <server-id>
 ```
 
-### Tool Management
+### Tool management
 
 ```bash
 konduct tool list
-konduct tool list --server <server-id>
 konduct tool enable <tool-id>
 konduct tool disable <tool-id>
 ```
 
-### Project Management
+### Project management
 
 ```bash
 konduct project create --name <name> [--description <text>]
@@ -153,141 +158,52 @@ konduct project add-server <project-id> <server-id>
 konduct project remove-server <project-id> <server-id>
 ```
 
-### Runtime & Diagnostics
+### Runtime and diagnostics
 
 ```bash
-konduct start                                 # Start as MCP stdio server
-konduct start --project <project-name>       # Start scoped to project
-konduct start --dashboard --port 3847        # Web dashboard mode
-konduct status                               # Check runtime status
-konduct logs --last 50                       # View recent logs
-konduct doctor                               # Health diagnostics
-```
-
-## Project-Scoped MCP Access
-
-Isolate tool exposure by project. Use this when you want different clients to see different tool sets.
-
-### Setup
-
-1. Create a project and add servers:
-
-```bash
-konduct project create --name Dev_Env
-konduct project add-server <project-id> <server-id>
-```
-
-2. Start Konduct scoped to that project:
-
-```bash
-konduct start --project Dev_Env
-```
-
-### Behavior
-
-- If the project doesn't exist, Konduct exits with an error
-- Only servers linked to the project are considered
-- Only tools from those servers are exposed to clients
-
-## Connecting to Clients
-
-Generate client configuration snippets for OpenCode, Cursor, Claude, or VSCode:
-
-```bash
-# View config (don't install)
-konduct connect opencode
-konduct connect cursor --project Dev_Env
-konduct connect claude
-
-# Install to client config automatically
-konduct connect opencode --install
-konduct connect cursor --install
-konduct connect vscode --install
-```
-
-When `--project` is provided, the generated config includes `start --project <name>`.
-
-### Config Paths
-
-- **OpenCode:** `~/.config/opencode/opencode.jsonc`
-- **Cursor:** `~/.cursor/mcp.json`
-- **Claude:** Platform-dependent (app install location)
-
-## Web Dashboard
-
-Launch the optional web dashboard for visual management:
-
-```bash
+konduct start
+konduct start --project <project-name>
 konduct start --dashboard --port 3847
+konduct status
+konduct logs --last 50
+konduct doctor
 ```
 
-Open in browser:
+## Import and export
 
-```
-http://localhost:3847
-```
+You can export your current configuration and import it later.
 
-The dashboard provides:
-- Server registration and discovery UI
-- Tool enable/disable controls
-- Project management interface
-- Real-time status and logs
+Current behavior:
 
-## Database
+- backup payloads preserve **tool UUIDs** for better identity continuity
+- exports are safe by default for secrets
+- merge imports are transactional
 
-Konduct stores all data in SQLite:
+If you are scripting against the API, treat backups as configuration plus stable tool identity, not just a loose snapshot.
+
+## Database location
+
+`mcp-konduct` stores state in SQLite.
 
 - **Linux:** `~/.config/mcp-konduct/konduct.db`
 - **macOS:** `~/Library/Application Support/mcp-konduct/konduct.db`
 - **Windows:** `%APPDATA%/mcp-konduct/konduct.db`
 
-To reset the database, delete the file and restart Konduct. It will recreate the schema automatically.
-
-## Examples
-
-### Add OpenCode MCP Servers
-
-Map common OpenCode server types to Konduct:
-
-```bash
-konduct server add --name chrome-devtools \
-  --transport stdio --command npx \
-  --args -y chrome-devtools-mcp@latest
-
-konduct server add --name context7 \
-  --transport stdio --command npx \
-  --args -y @upstash/context7-mcp
-
-konduct server add --name testsprite \
-  --transport stdio --command npx \
-  --args -y @testsprite/testsprite-mcp@latest --env API_KEY=your_key
-```
-
-Then discover tools:
-
-```bash
-konduct server discover <server-id>
-```
-
-### Multi-Project Setup
-
-```bash
-# Project 1: Development environment
-konduct project create --name Dev --description "Development tools"
-konduct project add-server <dev-project-id> <chrome-server-id>
-konduct project add-server <dev-project-id> <filesystem-server-id>
-
-# Project 2: Production environment (read-only)
-konduct project create --name Prod --description "Production tools"
-konduct project add-server <prod-project-id> <filesystem-server-id>
-
-# Start scoped to project
-konduct start --project Dev
-# In another terminal:
-konduct start --project Prod
-```
+To reset local state, remove the database file and start again.
 
 ## Development
+
+### Install
+
+```bash
+npm install
+```
+
+### Run tests
+
+```bash
+npm test
+```
 
 ### Build
 
@@ -295,109 +211,54 @@ konduct start --project Prod
 npm run build
 ```
 
-### Testing
+### Run commands in development
 
 ```bash
-npm run test
-npm run test -- --watch
-npm run test -- --ui
-npm run test -- src/path/to/file.test.ts
-```
-
-### Development Mode
-
-```bash
-npm run dev -- --help
 npm run dev -- server list
-npm run dev -- start
+npm run dev -- start --dashboard
 ```
 
-See [AGENTS.md](./AGENTS.md) for detailed development guidelines, code style, and architecture.
+### Useful project files
+
+- `src/cli/index.ts` — CLI entrypoint
+- `src/core/registry.ts` — registry and persistence logic
+- `src/core/settings-backup-service.ts` — backup/import logic
+- `src/web/index.ts` — web composition root
+- `src/web/servers.ts` / `projects.ts` / `tools.ts` / `logs.ts` / `stats.ts` — route modules
+- `AGENTS.md` — coding conventions and repo guidance
 
 ## Troubleshooting
 
-### Client Connection Issues
+### Tools are not showing up
 
-If your client reports `MCP error -32000: Connection closed`:
+Make sure you discovered them:
+
+```bash
+konduct server discover <server-id>
+konduct tool list
+```
+
+### A project exposes the wrong servers
+
+Check project membership:
+
+```bash
+konduct project list
+konduct server list
+```
+
+Then re-add or remove the relevant servers from that project.
+
+### A client cannot connect
+
+Start with:
 
 ```bash
 konduct doctor
 ```
 
-This runs diagnostics on server health, database connectivity, and config.
-
-### Ensure Correct Runtime Path
-
-Make sure your client config points to the compiled runtime:
-
-- **Correct:** `~/.npm/_npx/XXX/lib/node_modules/mcp-konduct/dist/cli/index.js`
-- **Incorrect:** `~/project/src/cli/index.ts` (uncompiled source)
-
-### Rebuild After Changes
-
-If you modify the source code:
+Then verify the generated client config with:
 
 ```bash
-npm run build
+konduct connect <client>
 ```
-
-The CLI automatically uses `dist/` directory.
-
-### Database Reset
-
-Delete the database to start fresh:
-
-```bash
-rm ~/.config/mcp-konduct/konduct.db
-konduct doctor  # Recreates schema
-```
-
-## Changelog
-
-### v1.6.2 — Project-Level Logging & Release Fixes
-
-**New Features:**
-- **Project-level request logging** — Each tool call now logs which project made the request (`project_id`, `project_name`, `router_session_id`). Enables traceability across environments.
-- **UUID-based tool IDs** — Tool IDs migrated from compound format (`serverId__toolName`) to UUIDs, eliminating collision issues with tool names containing `__`.
-- **Auto-discover on startup** — Servers with no registered tools are automatically discovered when the router starts.
-- **ENV vars in ServerForm** — Web dashboard form now accepts environment variables per server (KEY=VALUE format).
-
-**Improvements:**
-- **Enhanced JSON Schema support** — `buildInputSchema` now handles `enum`, `anyOf`/`oneOf`, type arrays (`["string", "null"]`), and `nullable` fields.
-- **Toast notifications** — All error and success operations now surface user-facing feedback in the web dashboard.
-- **Dynamic version** — CLI reads version from `package.json` instead of hardcoding.
-- **Log retention** — Request logs older than 30 days are automatically purged on startup.
-
-**Bug Fixes:**
-- `doctor` command no longer blocks — replaced blocking `execSync` with `spawnSync` + 5s timeout.
-- `getProjectTools` now uses SQL JOIN instead of loading all tools into memory.
-- `getConnection` supports SSE and Streamable-HTTP transports (previously only stdio).
-- `discoverTools` supports SSE and Streamable-HTTP servers.
-
-**Infrastructure:**
-- **88 Vitest unit tests** covering `registry`, `aggregator`, and `proxy` modules.
-- **GitHub Actions CI** — runs on Node 20/22, build + test + coverage.
-- **Automated releases** — GitHub Release created on merge to `main` with `tar.gz` archive.
-
----
-
-### v1.5.1 → Previous
-
-See [CHANGELOG.md](./CHANGELOG.md) for full history.
-
-## Architecture
-
-Konduct is built with:
-
-- **Core:** TypeScript with strict type checking
-- **CLI:** Commander.js for command parsing
-- **Database:** SQLite with better-sqlite3 (sync API)
-- **Web:** Hono + HTMX with Editorial Refined design
-- **Validation:** Zod for runtime schema validation
-- **Logging:** Pino for structured logs
-
-See [AGENTS.md](./AGENTS.md) for full architecture details and coding standards.
-
-## License
-
-MIT
