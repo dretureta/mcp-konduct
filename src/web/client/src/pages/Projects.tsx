@@ -85,7 +85,14 @@ export const Projects: React.FC = () => {
 
     setIsEditSubmitting(true);
     try {
-      await updateProject(editingProject.id, editProjectName.trim(), editProjectDescription.trim() || undefined);
+      const trimmedDescription = editProjectDescription.trim();
+      const nextDescription = trimmedDescription.length > 0
+        ? trimmedDescription
+        : editingProject.description
+          ? null
+          : undefined;
+
+      await updateProject(editingProject.id, editProjectName.trim(), nextDescription);
       closeEditModal();
     } finally {
       setIsEditSubmitting(false);

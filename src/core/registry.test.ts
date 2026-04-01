@@ -377,6 +377,22 @@ describe('ServerRegistry', () => {
       expect(mockRun).toHaveBeenCalledWith('beta', 'Keep me', 'project-1');
     });
 
+    it('should clear description when explicitly passed as null', () => {
+      mockGet.mockReturnValueOnce({ id: 'project-1', name: 'alpha', description: 'Clear me' });
+
+      registry.updateProject('project-1', { description: null as unknown as string });
+
+      expect(mockRun).toHaveBeenCalledWith('alpha', null, 'project-1');
+    });
+
+    it('should update description when a non-empty string is provided', () => {
+      mockGet.mockReturnValueOnce({ id: 'project-1', name: 'alpha', description: 'Old' });
+
+      registry.updateProject('project-1', { description: 'New description' });
+
+      expect(mockRun).toHaveBeenCalledWith('alpha', 'New description', 'project-1');
+    });
+
     it('should throw when the project does not exist', () => {
       mockGet.mockReturnValue(undefined);
 

@@ -344,8 +344,8 @@ export class ServerRegistry {
     return id;
   }
 
-  updateProject(id: string, partial: { name?: string; description?: string }): void {
-    const existing = db.prepare('SELECT id, name FROM projects WHERE id = ?').get(id) as Record<string, unknown> | undefined;
+  updateProject(id: string, partial: { name?: string; description?: string | null }): void {
+    const existing = db.prepare('SELECT id, name, description FROM projects WHERE id = ?').get(id) as Record<string, unknown> | undefined;
     if (!existing) {
       throw new Error(`Project not found: ${id}`);
     }
@@ -358,7 +358,9 @@ export class ServerRegistry {
     }
 
     const nextName = partial.name ?? String(existing.name);
-    const nextDescription = partial.description ?? (existing.description as string | null | undefined) ?? null;
+    const nextDescription = partial.description === undefined
+      ? (existing.description as string | null | undefined) ?? null
+      : partial.description;
 
     db.prepare(`
       UPDATE projects

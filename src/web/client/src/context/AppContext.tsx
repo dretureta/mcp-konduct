@@ -26,7 +26,7 @@ interface AppContextType {
   discoverTools: (id: string) => Promise<void>;
   toggleTool: (id: string) => Promise<void>;
   createProject: (name: string, description?: string) => Promise<void>;
-  updateProject: (id: string, name: string, description?: string) => Promise<void>;
+  updateProject: (id: string, name: string, description?: string | null) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
   fetchLogs: (params?: { limit?: number; server?: string; error?: boolean }) => Promise<void>;
   discoveringServerId: string | null;
@@ -192,7 +192,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const updateProject = async (id: string, name: string, description?: string) => {
+  const updateProject = async (id: string, name: string, description?: string | null) => {
     try {
       await projectApi.updateProject(id, { name, description });
       await refreshData();

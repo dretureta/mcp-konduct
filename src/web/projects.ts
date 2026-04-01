@@ -11,7 +11,7 @@ const ProjectCreateSchema = z.object({
 
 const ProjectUpdateSchema = z.object({
   name: z.string().trim().min(1).optional(),
-  description: z.string().trim().min(1).optional(),
+  description: z.union([z.string().trim().min(1), z.null()]).optional(),
 }).refine((value) => value.name !== undefined || value.description !== undefined, {
   message: 'At least one field must be provided',
 });

@@ -228,6 +228,44 @@ describe('Web API - Projects', () => {
       const json = await response.json();
       expect(json).toHaveProperty('error');
     });
+
+    it('should clear the description when null is sent explicitly', async () => {
+      const updatedProject = { id: 'project-1', name: 'alpha', description: undefined };
+      mocks.mockGetProject.mockReturnValue(updatedProject);
+
+      const response = await createTestRequest(app, 'PATCH', '/api/projects/project-1', {
+        body: { description: null },
+      });
+
+      expect(response.status).toBe(200);
+      expect(mocks.mockUpdateProject).toHaveBeenCalledWith('project-1', { description: null });
+
+      const json = await response.json();
+      expect(json).toEqual(updatedProject);
+    });
+
+    it('should preserve description when omitted', async () => {
+      const updatedProject = { id: 'project-1', name: 'beta', description: 'Keep me' };
+      mocks.mockGetProject.mockReturnValue(updatedProject);
+
+      const response = await createTestRequest(app, 'PATCH', '/api/projects/project-1', {
+        body: { name: 'beta' },
+      });
+
+      expect(response.status).toBe(200);
+      expect(mocks.mockUpdateProject).toHaveBeenCalledWith('project-1', { name: 'beta' });
+    });
+
+    it('should reject empty string descriptions instead of treating them as clear', async () => {
+      const response = await createTestRequest(app, 'PATCH', '/api/projects/project-1', {
+        body: { description: '' },
+      });
+
+      expect(response.status).toBe(400);
+
+      const json = await response.json();
+      expect(json).toHaveProperty('error');
+    });
   });
 });
 
