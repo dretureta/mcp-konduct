@@ -67,6 +67,13 @@ export class ServerRegistry {
   }
 
   updateServer(id: string, partial: Partial<ServerConfig>): void {
+    if (partial.name !== undefined) {
+      const existing = db.prepare('SELECT id FROM servers WHERE name = ? AND id != ?').get(partial.name, id);
+      if (existing) {
+        throw new Error(`Server with name '${partial.name}' already exists`);
+      }
+    }
+
     const updates: string[] = [];
     const values: unknown[] = [];
 
@@ -324,12 +331,42 @@ export class ServerRegistry {
   }
 
   createProject(name: string, description?: string): string {
+    const existing = db.prepare('SELECT id FROM projects WHERE name = ?').get(name);
+    if (existing) {
+      throw new Error(`Project with name '${name}' already exists`);
+    }
+
     const id = randomUUID();
     db.prepare(`
       INSERT INTO projects (id, name, description)
       VALUES (?, ?, ?)
     `).run(id, name, description || null);
     return id;
+  }
+
+  updateProject(id: string, partial: { name?: string; description?: string | null }): void {
+    const existing = db.prepare('SELECT id, name, description FROM projects WHERE id = ?').get(id) as Record<string, unknown> | undefined;
+    if (!existing) {
+      throw new Error(`Project not found: ${id}`);
+    }
+
+    if (partial.name !== undefined) {
+      const duplicate = db.prepare('SELECT id FROM projects WHERE name = ? AND id != ?').get(partial.name, id);
+      if (duplicate) {
+        throw new Error(`Project with name '${partial.name}' already exists`);
+      }
+    }
+
+    const nextName = partial.name ?? String(existing.name);
+    const nextDescription = partial.description === undefined
+      ? (existing.description as string | null | undefined) ?? null
+      : partial.description;
+
+    db.prepare(`
+      UPDATE projects
+      SET name = ?, description = ?
+      WHERE id = ?
+    `).run(nextName, nextDescription, id);
   }
 
   deleteProject(id: string): boolean {

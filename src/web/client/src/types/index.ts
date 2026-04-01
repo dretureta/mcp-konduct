@@ -9,7 +9,7 @@ export interface Server {
   args?: string[];
   url?: string;
   env?: Record<string, string>;
-  status: 'online' | 'offline' | 'error';
+  status?: 'online' | 'offline' | 'error';
   lastSeen?: string;
 }
 
@@ -20,6 +20,7 @@ export interface CreateServerRequest {
   args?: string[];
   url?: string;
   env?: Record<string, string>;
+  enabled?: boolean;
 }
 
 export interface UpdateServerRequest extends Partial<CreateServerRequest> {
@@ -30,7 +31,12 @@ export interface Tool {
   id: string;
   serverId: string;
   toolName: string;
+  title?: string;
+  description?: string;
+  inputSchema?: object;
+  outputSchema?: object;
   enabled: boolean;
+  discoveredAt?: string;
 }
 
 export interface Project {
@@ -100,6 +106,7 @@ export interface BackupPayload {
     }>;
     tools: Array<{
       id: string;
+      uuid?: string | null;
       server_id: string;
       tool_name: string;
       enabled: number;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Briefcase, Plus, Trash2, Folder, ExternalLink, Link2, Unlink2, ChevronDown, Copy } from 'lucide-react';
+import { Briefcase, Plus, Trash2, Folder, ExternalLink, Link2, Unlink2, ChevronDown, Copy, Pencil } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { Modal } from '../components/ui/Modal';
 import { Card } from '../components/common/Card.tsx';
@@ -13,9 +13,10 @@ import { projectApi } from '../utils/api';
 import { Project, ProjectFullResponse, Server } from '../types';
 
 export const Projects: React.FC = () => {
-  const { projects, servers, isLoading, createProject, deleteProject, refreshData } = useAppContext();
+  const { projects, servers, isLoading, createProject, updateProject, deleteProject, refreshData } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
+  const [newProjectDescription, setNewProjectDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [managingProject, setManagingProject] = useState<Project | null>(null);
@@ -24,6 +25,10 @@ export const Projects: React.FC = () => {
   const [expandedProjectId, setExpandedProjectId] = useState<string | null>(null);
   const [projectDetails, setProjectDetails] = useState<Record<string, ProjectFullResponse>>({});
   const [loadingProjectDetails, setLoadingProjectDetails] = useState<string | null>(null);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [editProjectName, setEditProjectName] = useState('');
+  const [editProjectDescription, setEditProjectDescription] = useState('');
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,8 +36,9 @@ export const Projects: React.FC = () => {
     
     setIsSubmitting(true);
     try {
-      await createProject(newProjectName);
+      await createProject(newProjectName, newProjectDescription.trim() || undefined);
       setNewProjectName('');
+      setNewProjectDescription('');
       setIsModalOpen(false);
     } finally {
       setIsSubmitting(false);
@@ -59,6 +65,38 @@ export const Projects: React.FC = () => {
     setIsManageModalOpen(false);
     setManagingProject(null);
     setProjectServers([]);
+  };
+
+  const openEditModal = (project: Project) => {
+    setEditingProject(project);
+    setEditProjectName(project.name);
+    setEditProjectDescription(project.description || '');
+  };
+
+  const closeEditModal = () => {
+    setEditingProject(null);
+    setEditProjectName('');
+    setEditProjectDescription('');
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProject || !editProjectName.trim()) return;
+
+    setIsEditSubmitting(true);
+    try {
+      const trimmedDescription = editProjectDescription.trim();
+      const nextDescription = trimmedDescription.length > 0
+        ? trimmedDescription
+        : editingProject.description
+          ? null
+          : undefined;
+
+      await updateProject(editingProject.id, editProjectName.trim(), nextDescription);
+      closeEditModal();
+    } finally {
+      setIsEditSubmitting(false);
+    }
   };
 
   const addServerToProject = async (serverId: string) => {
@@ -145,6 +183,19 @@ export const Projects: React.FC = () => {
             onChange={(e) => setNewProjectName(e.target.value)}
             helperText="A clear, concise name for your collection of servers."
           />
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Description</label>
+            <textarea
+              className="w-full bg-slate-100 dark:bg-slate-800 border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all"
+              placeholder="What is this project for?"
+              rows={3}
+              value={newProjectDescription}
+              onChange={(e) => setNewProjectDescription(e.target.value)}
+            />
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Optional context shown on project cards to help explain the collection.
+            </p>
+          </div>
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
             <Button
               type="button"
@@ -236,6 +287,41 @@ export const Projects: React.FC = () => {
         )}
       </Modal>
 
+      <Modal isOpen={!!editingProject} onClose={closeEditModal} title={editingProject ? `Edit ${editingProject.name}` : 'Edit Project'}>
+        <form onSubmit={handleEditSubmit} className="space-y-6">
+          <Input
+            label="Project Name"
+            required
+            autoFocus
+            placeholder="e.g., Marketing AI, Dev Environment"
+            value={editProjectName}
+            onChange={(e) => setEditProjectName(e.target.value)}
+            helperText="Update the display name for this project."
+          />
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Description</label>
+            <textarea
+              className="w-full bg-slate-100 dark:bg-slate-800 border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all"
+              placeholder="What is this project for?"
+              rows={3}
+              value={editProjectDescription}
+              onChange={(e) => setEditProjectDescription(e.target.value)}
+            />
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Optional context shown on project cards to explain the collection.
+            </p>
+          </div>
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <Button type="button" variant="secondary" onClick={closeEditModal}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isEditSubmitting || !editProjectName.trim()} isLoading={isEditSubmitting}>
+              Update Project
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
       {projects.length === 0 ? (
         <EmptyState 
           icon={Briefcase}
@@ -257,20 +343,33 @@ export const Projects: React.FC = () => {
                   <div className="p-3 rounded-2xl bg-primary/10 text-primary group-hover:scale-110 transition-transform">
                     <Folder size={24} />
                   </div>
-                  <Tooltip content="Delete Project">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        if (window.confirm('Delete this project? This will not delete the connected servers.')) {
-                          deleteProject(project.id);
-                        }
-                      }}
-                      className="text-slate-400 hover:text-rose-500"
-                    >
-                      <Trash2 size={18} />
-                    </Button>
-                  </Tooltip>
+                  <div className="flex items-center gap-2">
+                    <Tooltip content="Edit Details">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Edit project"
+                        onClick={() => openEditModal(project)}
+                        className="text-slate-400 hover:text-primary"
+                      >
+                        <Pencil size={18} />
+                      </Button>
+                    </Tooltip>
+                    <Tooltip content="Delete Project">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          if (window.confirm('Delete this project? This will not delete the connected servers.')) {
+                            deleteProject(project.id);
+                          }
+                        }}
+                        className="text-slate-400 hover:text-rose-500"
+                      >
+                        <Trash2 size={18} />
+                      </Button>
+                    </Tooltip>
+                  </div>
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{project.name}</h3>
