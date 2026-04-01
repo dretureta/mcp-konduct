@@ -17,8 +17,11 @@ import {
 import { getDbPath } from '../config/db.js';
 import { db } from '../config/db.js';
 import { readFileSync, existsSync } from 'fs';
+import { registerLogRoutes } from './logs.js';
 import { registerProjectRoutes } from './projects.js';
 import { registerServerRoutes } from './servers.js';
+import { registerStatRoutes } from './stats.js';
+import { registerToolRoutes } from './tools.js';
 
 // Get directory of this file (works in ESM and after compilation)
 const __filename = fileURLToPath(import.meta.url);
@@ -48,61 +51,10 @@ app.use('*', cors({
 
 // API Endpoints
 registerServerRoutes(app);
-
-app.get('/api/tools', (c) => {
-  return c.json(registry.listAllTools());
-});
-
-app.post('/api/tools/:id/toggle', (c) => {
-  const id = c.req.param('id');
-  const tools = registry.listAllTools();
-  const tool = tools.find(t => t.id === id);
-  if (tool) {
-    tool.enabled ? registry.disableTool(id) : registry.enableTool(id);
-  }
-  return c.json({ success: true });
-});
+registerToolRoutes(app);
 registerProjectRoutes(app);
-
-app.get('/api/logs', (c) => {
-  const limit = parseInt(c.req.query('limit') || '50');
-  const serverId = c.req.query('server');
-  const errorOnly = c.req.query('error') === 'true';
-
-  let query = 'SELECT * FROM request_logs';
-  const params: any[] = [];
-  const conditions: string[] = [];
-
-  if (serverId) {
-    conditions.push('server_id = ?');
-    params.push(serverId);
-  }
-  if (errorOnly) {
-    conditions.push('success = 0');
-  }
-
-  if (conditions.length > 0) {
-    query += ' WHERE ' + conditions.join(' AND ');
-  }
-
-  query += ' ORDER BY timestamp DESC LIMIT ?';
-  params.push(limit);
-
-  const logs = db.prepare(query).all(...params);
-  return c.json(logs);
-});
-
-app.get('/api/stats', (c) => {
-  const servers = registry.listServers();
-  const tools = registry.listAllTools();
-  return c.json({
-    servers: servers.length,
-    enabledServers: servers.filter(s => s.enabled).length,
-    tools: tools.length,
-    enabledTools: tools.filter(t => t.enabled).length,
-    dbPath: getDbPath()
-  });
-});
+registerLogRoutes(app);
+registerStatRoutes(app);
 
 app.get('/api/settings/export', (c) => {
   const includeSensitive = c.req.query('sensitive') === 'true';
