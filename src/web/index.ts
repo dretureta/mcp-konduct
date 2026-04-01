@@ -1,4 +1,4 @@
-import { Hono, type Context } from 'hono';
+import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { serveStatic } from '@hono/node-server/serve-static';
@@ -17,6 +17,8 @@ import {
 import { getDbPath } from '../config/db.js';
 import { db } from '../config/db.js';
 import { readFileSync, existsSync } from 'fs';
+import { parseJsonBody, serializeServer } from './http-helpers.js';
+import { registerProjectRoutes } from './projects.js';
 
 // Get directory of this file (works in ESM and after compilation)
 const __filename = fileURLToPath(import.meta.url);
@@ -61,44 +63,7 @@ const ServerCreateSchema = z.object({
   }
 });
 
-const ProjectCreateSchema = z.object({
-  name: z.string().trim().min(1),
-  description: z.string().trim().min(1).optional(),
-});
-
-const ProjectUpdateSchema = z.object({
-  name: z.string().trim().min(1).optional(),
-  description: z.string().trim().min(1).optional(),
-}).refine((value) => value.name !== undefined || value.description !== undefined, {
-  message: 'At least one field must be provided',
-});
-
 const LOCALHOST_ORIGIN_PATTERN = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
-
-const redactEnvRecord = (
-  env: Record<string, string> | undefined,
-  includeSecrets = false
-): Record<string, string> | undefined => {
-  if (!env) {
-    return undefined;
-  }
-
-  if (includeSecrets) {
-    return env;
-  }
-
-  return Object.fromEntries(Object.keys(env).map((key) => [key, '[REDACTED]']));
-};
-
-const serializeServer = <T extends { env?: Record<string, string> }>(
-  server: T,
-  includeSecrets = false
-): T => {
-  return {
-    ...server,
-    env: redactEnvRecord(server.env, includeSecrets),
-  };
-};
 
 const isAllowedOrigin = (origin: string | undefined): boolean => {
   if (!origin) {
@@ -108,31 +73,6 @@ const isAllowedOrigin = (origin: string | undefined): boolean => {
   return LOCALHOST_ORIGIN_PATTERN.test(origin);
 };
 
-const isSyntaxError = (error: unknown): boolean => {
-  return error instanceof SyntaxError;
-};
-
-const parseJsonBody = async <T>(c: Context, schema: z.ZodType<T>): Promise<{ data: T } | { response: Response }> => {
-  try {
-    const body = await c.req.json();
-    return { data: schema.parse(body) };
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return {
-        response: c.json({
-          error: 'Invalid request body',
-          details: error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`),
-        }, 400),
-      };
-    }
-
-    if (isSyntaxError(error)) {
-      return { response: c.json({ error: 'Invalid JSON body' }, 400) };
-    }
-
-    throw error;
-  }
-};
 
 
 app.use('*', logger());
@@ -386,159 +326,7 @@ app.post('/api/tools/:id/toggle', (c) => {
   }
   return c.json({ success: true });
 });
-
-app.get('/api/projects', (c) => {
-  const projects = db.prepare(`
-    SELECT p.*, COUNT(ps.server_id) AS server_count
-    FROM projects p
-    LEFT JOIN project_servers ps ON p.id = ps.project_id
-    GROUP BY p.id
-    ORDER BY p.name
-  `).all() as Array<Record<string, unknown>>;
-
-  return c.json(projects.map((project) => ({
-    id: project.id,
-    name: project.name,
-    description: project.description,
-    createdAt: project.created_at,
-    serverCount: Number(project.server_count ?? 0)
-  })));
-});
-
-app.post('/api/projects', async (c) => {
-  try {
-    const result = await parseJsonBody(c, ProjectCreateSchema);
-    if ('response' in result) {
-      return result.response;
-    }
-
-    const id = result.data.description === undefined
-      ? registry.createProject(result.data.name)
-      : registry.createProject(result.data.name, result.data.description);
-    return c.json({
-      id,
-      name: result.data.name,
-      description: result.data.description,
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    if (message.includes('already exists')) {
-      return c.json({ error: message }, 400);
-    }
-
-    return c.json({ error: message }, 500);
-  }
-});
-
-app.patch('/api/projects/:id', async (c) => {
-  try {
-    const result = await parseJsonBody(c, ProjectUpdateSchema);
-    if ('response' in result) {
-      return result.response;
-    }
-
-    registry.updateProject(c.req.param('id'), result.data);
-    return c.json(registry.getProject(c.req.param('id')));
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    if (message.includes('already exists')) {
-      return c.json({ error: message }, 400);
-    }
-    if (message.includes('Project not found')) {
-      return c.json({ error: message }, 404);
-    }
-
-    return c.json({ error: message }, 500);
-  }
-});
-
-app.post('/api/projects/:id/delete', (c) => {
-  try {
-    const deleted = registry.deleteProject(c.req.param('id'));
-    if (!deleted) {
-      return c.json({ error: 'Project not found' }, 404);
-    }
-
-    return c.json({ success: true });
-  } catch (error) {
-    return c.json({ error: error instanceof Error ? error.message : String(error) }, 500);
-  }
-});
-
-app.get('/api/projects/:id/servers', (c) => {
-  const projectId = c.req.param('id');
-  const includeSecrets = c.req.query('secrets') === 'true';
-  return c.json(registry.listServers(projectId).map((server) => serializeServer(server, includeSecrets)));
-});
-
-app.get('/api/projects/:id/full', (c) => {
-  const projectId = c.req.param('id');
-  const includeSecrets = c.req.query('secrets') === 'true';
-  const project = registry.getProject(projectId);
-
-  if (!project) {
-    return c.json({ error: 'Project not found' }, 404);
-  }
-
-  const servers = registry.getProjectServers(project.name).map((server) => serializeServer(server, includeSecrets));
-  const tools = registry.getProjectTools(project.name);
-
-  return c.json({
-    project,
-    servers,
-    tools,
-    summary: {
-      serverCount: servers.length,
-      toolCount: tools.length,
-    },
-    config: {
-      command: `konduct start --project "${project.name}"`,
-      description: 'Use this command in your MCP client config to scope access to this project only.',
-    },
-  });
-});
-
-app.post('/api/projects/:id/servers/:serverId/add', (c) => {
-  try {
-    const projectId = c.req.param('id');
-    const serverId = c.req.param('serverId');
-    const project = registry.getProject(projectId);
-    if (!project) {
-      return c.json({ error: 'Project not found' }, 404);
-    }
-
-    const server = registry.getServer(serverId);
-    if (!server) {
-      return c.json({ error: 'Server not found' }, 404);
-    }
-
-    registry.addServerToProject(projectId, serverId);
-    return c.json({ success: true });
-  } catch (error) {
-    return c.json({ error: error instanceof Error ? error.message : String(error) }, 500);
-  }
-});
-
-app.post('/api/projects/:id/servers/:serverId/remove', (c) => {
-  try {
-    const projectId = c.req.param('id');
-    const serverId = c.req.param('serverId');
-    const project = registry.getProject(projectId);
-    if (!project) {
-      return c.json({ error: 'Project not found' }, 404);
-    }
-
-    const server = registry.getServer(serverId);
-    if (!server) {
-      return c.json({ error: 'Server not found' }, 404);
-    }
-
-    registry.removeServerFromProject(projectId, serverId);
-    return c.json({ success: true });
-  } catch (error) {
-    return c.json({ error: error instanceof Error ? error.message : String(error) }, 500);
-  }
-});
+registerProjectRoutes(app);
 
 app.get('/api/logs', (c) => {
   const limit = parseInt(c.req.query('limit') || '50');
