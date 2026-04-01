@@ -25,7 +25,7 @@ interface AppContextType {
   deleteServer: (id: string) => Promise<void>;
   discoverTools: (id: string) => Promise<void>;
   toggleTool: (id: string) => Promise<void>;
-  createProject: (name: string) => Promise<void>;
+  createProject: (name: string, description?: string) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
   fetchLogs: (params?: { limit?: number; server?: string; error?: boolean }) => Promise<void>;
   discoveringServerId: string | null;
@@ -179,9 +179,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const createProject = async (name: string) => {
+  const createProject = async (name: string, description?: string) => {
     try {
-      await projectApi.createProject(name);
+      await projectApi.createProject(name, description);
       await refreshData();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to create project';

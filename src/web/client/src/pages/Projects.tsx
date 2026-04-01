@@ -16,6 +16,7 @@ export const Projects: React.FC = () => {
   const { projects, servers, isLoading, createProject, deleteProject, refreshData } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
+  const [newProjectDescription, setNewProjectDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [managingProject, setManagingProject] = useState<Project | null>(null);
@@ -31,8 +32,9 @@ export const Projects: React.FC = () => {
     
     setIsSubmitting(true);
     try {
-      await createProject(newProjectName);
+      await createProject(newProjectName, newProjectDescription.trim() || undefined);
       setNewProjectName('');
+      setNewProjectDescription('');
       setIsModalOpen(false);
     } finally {
       setIsSubmitting(false);
@@ -145,6 +147,19 @@ export const Projects: React.FC = () => {
             onChange={(e) => setNewProjectName(e.target.value)}
             helperText="A clear, concise name for your collection of servers."
           />
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Description</label>
+            <textarea
+              className="w-full bg-slate-100 dark:bg-slate-800 border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all"
+              placeholder="What is this project for?"
+              rows={3}
+              value={newProjectDescription}
+              onChange={(e) => setNewProjectDescription(e.target.value)}
+            />
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Optional context shown on project cards to help explain the collection.
+            </p>
+          </div>
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
             <Button
               type="button"

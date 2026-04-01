@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => {
     mockAddServer: vi.fn(),
     mockUpdateServer: vi.fn(),
     mockCreateProject: vi.fn(),
+    mockGetProject: vi.fn(),
+    mockUpdateProject: vi.fn(),
     mockDbAll: vi.fn(),
     mockDbGet: vi.fn(),
   };
@@ -20,6 +22,8 @@ vi.mock('../core/registry.js', () => ({
     addServer: mocks.mockAddServer,
     updateServer: mocks.mockUpdateServer,
     createProject: mocks.mockCreateProject,
+    getProject: mocks.mockGetProject,
+    updateProject: mocks.mockUpdateProject,
   },
 }));
 
@@ -76,6 +80,8 @@ describe('Web API - Projects', () => {
     // Reset mock implementations to return default values
     mocks.mockCreateProject.mockReset();
     mocks.mockCreateProject.mockReturnValue('new-project-id');
+    mocks.mockGetProject.mockReset();
+    mocks.mockUpdateProject.mockReset();
     mocks.mockAddServer.mockReset();
     mocks.mockAddServer.mockReturnValue('new-server-id');
   });
@@ -163,6 +169,64 @@ describe('Web API - Projects', () => {
       const json = await response.json();
       expect(json).toHaveProperty('error');
       expect(json.error).toContain('already exists');
+    });
+  });
+
+  describe('PATCH /api/projects/:id', () => {
+    it('should update the project description', async () => {
+      const updatedProject = { id: 'project-1', name: 'alpha', description: 'Updated project description' };
+      mocks.mockGetProject.mockReturnValue(updatedProject);
+
+      const response = await createTestRequest(app, 'PATCH', '/api/projects/project-1', {
+        body: { description: 'Updated project description' },
+      });
+
+      expect(response.status).toBe(200);
+      expect(mocks.mockUpdateProject).toHaveBeenCalledWith('project-1', { description: 'Updated project description' });
+
+      const json = await response.json();
+      expect(json).toEqual(updatedProject);
+    });
+
+    it('should return 404 when the project does not exist', async () => {
+      mocks.mockUpdateProject.mockImplementation(() => {
+        throw new Error('Project not found: missing-project');
+      });
+
+      const response = await createTestRequest(app, 'PATCH', '/api/projects/missing-project', {
+        body: { description: 'Nope' },
+      });
+
+      expect(response.status).toBe(404);
+
+      const json = await response.json();
+      expect(json).toHaveProperty('error');
+    });
+
+    it('should return 400 for duplicate names', async () => {
+      mocks.mockUpdateProject.mockImplementation(() => {
+        throw new Error("Project with name 'beta' already exists");
+      });
+
+      const response = await createTestRequest(app, 'PATCH', '/api/projects/project-1', {
+        body: { name: 'beta' },
+      });
+
+      expect(response.status).toBe(400);
+
+      const json = await response.json();
+      expect(json).toHaveProperty('error');
+    });
+
+    it('should return 400 for invalid payload', async () => {
+      const response = await createTestRequest(app, 'PATCH', '/api/projects/project-1', {
+        body: {},
+      });
+
+      expect(response.status).toBe(400);
+
+      const json = await response.json();
+      expect(json).toHaveProperty('error');
     });
   });
 });

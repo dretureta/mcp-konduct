@@ -40,6 +40,7 @@ export const toolApi = {
 export const projectApi = {
   getProjects: () => api.get<Project[]>('/projects'),
   createProject: (name: string, description?: string) => api.post('/projects', { name, description }),
+  updateProject: (id: string, data: { name?: string; description?: string }) => api.patch<Project>(`/projects/${id}`, data),
   deleteProject: (id: string) => api.post(`/projects/${id}/delete`),
   getProjectServers: (id: string) => api.get<Server[]>(`/projects/${id}/servers`),
   getProjectFull: (id: string) => api.get<ProjectFullResponse>(`/projects/${id}/full`),

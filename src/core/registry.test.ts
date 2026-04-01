@@ -349,4 +349,49 @@ describe('ServerRegistry', () => {
       expect(mockRun).toHaveBeenCalled();
     });
   });
+
+  describe('updateProject', () => {
+    it('should update the project description', () => {
+      mockGet.mockReturnValueOnce({ id: 'project-1', name: 'alpha' });
+
+      registry.updateProject('project-1', { description: 'Updated description' });
+
+      expect(mockRun).toHaveBeenCalled();
+    });
+
+    it('should update the project name', () => {
+      mockGet.mockReturnValueOnce({ id: 'project-1', name: 'alpha' });
+      mockGet.mockReturnValueOnce(undefined);
+
+      registry.updateProject('project-1', { name: 'beta' });
+
+      expect(mockRun).toHaveBeenCalledWith('beta', null, 'project-1');
+    });
+
+    it('should preserve description on name-only updates', () => {
+      mockGet.mockReturnValueOnce({ id: 'project-1', name: 'alpha', description: 'Keep me' });
+      mockGet.mockReturnValueOnce(undefined);
+
+      registry.updateProject('project-1', { name: 'beta' });
+
+      expect(mockRun).toHaveBeenCalledWith('beta', 'Keep me', 'project-1');
+    });
+
+    it('should throw when the project does not exist', () => {
+      mockGet.mockReturnValue(undefined);
+
+      expect(() => registry.updateProject('missing-project', { description: 'Nope' })).toThrow(
+        'Project not found: missing-project'
+      );
+    });
+
+    it('should reject duplicate project names', () => {
+      mockGet.mockReturnValueOnce({ id: 'project-1', name: 'alpha' });
+      mockGet.mockReturnValueOnce({ id: 'project-2', name: 'beta' });
+
+      expect(() => registry.updateProject('project-1', { name: 'beta' })).toThrow(
+        "Project with name 'beta' already exists"
+      );
+    });
+  });
 });

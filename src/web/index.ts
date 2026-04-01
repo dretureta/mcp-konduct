@@ -107,6 +107,13 @@ const ProjectCreateSchema = z.object({
   description: z.string().trim().min(1).optional(),
 });
 
+const ProjectUpdateSchema = z.object({
+  name: z.string().trim().min(1).optional(),
+  description: z.string().trim().min(1).optional(),
+}).refine((value) => value.name !== undefined || value.description !== undefined, {
+  message: 'At least one field must be provided',
+});
+
 const LOCALHOST_ORIGIN_PATTERN = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
 
 type BackupPayload = z.infer<typeof BackupPayloadSchema>;
@@ -887,6 +894,28 @@ app.post('/api/projects', async (c) => {
     const message = error instanceof Error ? error.message : String(error);
     if (message.includes('already exists')) {
       return c.json({ error: message }, 400);
+    }
+
+    return c.json({ error: message }, 500);
+  }
+});
+
+app.patch('/api/projects/:id', async (c) => {
+  try {
+    const result = await parseJsonBody(c, ProjectUpdateSchema);
+    if ('response' in result) {
+      return result.response;
+    }
+
+    registry.updateProject(c.req.param('id'), result.data);
+    return c.json(registry.getProject(c.req.param('id')));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes('already exists')) {
+      return c.json({ error: message }, 400);
+    }
+    if (message.includes('Project not found')) {
+      return c.json({ error: message }, 404);
     }
 
     return c.json({ error: message }, 500);

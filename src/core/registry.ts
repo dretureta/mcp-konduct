@@ -344,6 +344,29 @@ export class ServerRegistry {
     return id;
   }
 
+  updateProject(id: string, partial: { name?: string; description?: string }): void {
+    const existing = db.prepare('SELECT id, name FROM projects WHERE id = ?').get(id) as Record<string, unknown> | undefined;
+    if (!existing) {
+      throw new Error(`Project not found: ${id}`);
+    }
+
+    if (partial.name !== undefined) {
+      const duplicate = db.prepare('SELECT id FROM projects WHERE name = ? AND id != ?').get(partial.name, id);
+      if (duplicate) {
+        throw new Error(`Project with name '${partial.name}' already exists`);
+      }
+    }
+
+    const nextName = partial.name ?? String(existing.name);
+    const nextDescription = partial.description ?? (existing.description as string | null | undefined) ?? null;
+
+    db.prepare(`
+      UPDATE projects
+      SET name = ?, description = ?
+      WHERE id = ?
+    `).run(nextName, nextDescription, id);
+  }
+
   deleteProject(id: string): boolean {
     const result = db.prepare('DELETE FROM projects WHERE id = ?').run(id);
     return result.changes > 0;
