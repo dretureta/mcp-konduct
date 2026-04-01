@@ -290,6 +290,11 @@ const applyImportMerge = (payload: BackupPayload): { summary: ImportSummary; mes
     const existingToolRows = db.prepare('SELECT id, uuid FROM tools').all() as Array<Record<string, unknown>>;
     const existingToolsById = new Set(existingToolRows.map((row) => row.id as string));
     const existingToolsByUuid = new Set(existingToolRows.filter((row) => row.uuid).map((row) => row.uuid as string));
+    const existingToolIdByUuid = new Map(
+      existingToolRows
+        .filter((row) => row.uuid)
+        .map((row) => [row.uuid as string, row.id as string])
+    );
     const updateToolStmt = db.prepare('UPDATE tools SET server_id = ?, tool_name = ?, enabled = ? WHERE id = ?');
     const insertToolStmt = db.prepare(`
     INSERT INTO tools (id, uuid, server_id, tool_name, enabled, discovered_at)
@@ -302,7 +307,7 @@ const applyImportMerge = (payload: BackupPayload): { summary: ImportSummary; mes
       let resolvedUuid: string | undefined;
 
       if (isUUID(tool.id) && existingToolsByUuid.has(tool.id)) {
-        resolvedToolId = tool.id;
+        resolvedToolId = existingToolIdByUuid.get(tool.id) ?? tool.id;
         resolvedUuid = tool.id;
       } else if (existingToolsById.has(tool.id)) {
         resolvedToolId = tool.id;
