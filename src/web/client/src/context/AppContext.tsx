@@ -26,6 +26,7 @@ interface AppContextType {
   discoverTools: (id: string) => Promise<void>;
   toggleTool: (id: string) => Promise<void>;
   createProject: (name: string, description?: string) => Promise<void>;
+  updateProject: (id: string, name: string, description?: string) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
   fetchLogs: (params?: { limit?: number; server?: string; error?: boolean }) => Promise<void>;
   discoveringServerId: string | null;
@@ -191,6 +192,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const updateProject = async (id: string, name: string, description?: string) => {
+    try {
+      await projectApi.updateProject(id, { name, description });
+      await refreshData();
+      addToast('success', 'Project updated successfully');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to update project';
+      setError(msg);
+      addToast('error', msg);
+      throw err;
+    }
+  };
+
   const deleteProject = async (id: string) => {
     try {
       await projectApi.deleteProject(id);
@@ -226,6 +240,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         discoverTools,
         toggleTool,
         createProject,
+        updateProject,
         deleteProject,
         fetchLogs,
         searchQuery,
