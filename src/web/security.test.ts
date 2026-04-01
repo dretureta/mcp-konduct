@@ -631,3 +631,17 @@ describe('Security - Project endpoints', () => {
     expect(JSON.stringify(json)).not.toContain('project-secret');
   });
 });
+
+describe('Security - CORS', () => {
+  it('allows PATCH in localhost preflight requests', async () => {
+    const response = await createTestRequest(app, 'OPTIONS', '/api/projects/project-1', {
+      headers: {
+        Origin: 'http://localhost:5173',
+        'Access-Control-Request-Method': 'PATCH',
+      },
+    });
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get('access-control-allow-methods')).toContain('PATCH');
+  });
+});
