@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockAll = vi.fn<() => Record<string, unknown>[]>(() => []);
 const mockGet = vi.fn<() => Record<string, unknown> | undefined>();
-const mockRun = vi.fn<() => { changes: number }>(() => ({ changes: 1 }));
+const mockRun = vi.fn<(...args: unknown[]) => { changes: number }>(() => ({ changes: 1 }));
 
 vi.mock('../config/db.js', () => ({
   db: {
@@ -16,6 +16,7 @@ vi.mock('../config/db.js', () => ({
 }));
 
 import { analyzeImportImpact, applyImportPayload, BackupPayloadSchema, buildBackupPayload } from './settings-backup-service.js';
+import type { BackupPayload } from './settings-backup-service.js';
 
 describe('settings-backup-service', () => {
   beforeEach(() => {
@@ -133,12 +134,12 @@ describe('settings-backup-service', () => {
         .mockReturnValueOnce({ count: 4 }); // relations
 
       // Payload: 2 servers, 4 tools, 1 project, 3 relations
-      const payload = {
+      const payload: BackupPayload = {
         version: 'konduct-backup-v1',
         exportedAt: '2026-03-31T00:00:00.000Z',
         appVersion: '1.6.6',
         data: {
-          servers: [{ id: 's1', name: 'A', transport: 'stdio' as const, enabled: 1 }, { id: 's2', name: 'B', transport: 'sse' as const, enabled: 1 }],
+          servers: [{ id: 's1', name: 'A', transport: 'stdio', enabled: 1 }, { id: 's2', name: 'B', transport: 'sse', enabled: 1 }],
           tools: [{ id: 't1', server_id: 's1', tool_name: 'foo', enabled: 1 }, { id: 't2', server_id: 's1', tool_name: 'bar', enabled: 1 }, { id: 't3', server_id: 's2', tool_name: 'baz', enabled: 1 }, { id: 't4', server_id: 's2', tool_name: 'qux', enabled: 1 }],
           projects: [{ id: 'p1', name: 'Proj1' }],
           projectServers: [{ projectId: 'p1', serverId: 's1' }, { projectId: 'p1', serverId: 's2' }, { projectId: 'p1', serverId: 's1' }], // duplicate
@@ -157,7 +158,7 @@ describe('settings-backup-service', () => {
     it('returns zero removed when database is empty', () => {
       mockGet.mockReturnValue({ count: 0 });
 
-      const payload = {
+      const payload: BackupPayload = {
         version: 'konduct-backup-v1',
         exportedAt: '2026-03-31T00:00:00.000Z',
         appVersion: '1.6.6',
@@ -182,12 +183,12 @@ describe('settings-backup-service', () => {
       mockAll.mockReturnValue([]);
       mockRun.mockReturnValue({ changes: 1 });
 
-      const payload = {
+      const payload: BackupPayload = {
         version: 'konduct-backup-v1',
         exportedAt: '2026-03-31T00:00:00.000Z',
         appVersion: '1.6.6',
         data: {
-          servers: [{ id: 's1', name: 'Test', transport: 'stdio' as const, enabled: 1 }],
+          servers: [{ id: 's1', name: 'Test', transport: 'stdio', enabled: 1 }],
           tools: [],
           projects: [],
           projectServers: [],
@@ -211,12 +212,12 @@ describe('settings-backup-service', () => {
       mockAll.mockReturnValue([]);
       mockRun.mockReturnValue({ changes: 1 });
 
-      const payload = {
+      const payload: BackupPayload = {
         version: 'konduct-backup-v1',
         exportedAt: '2026-03-31T00:00:00.000Z',
         appVersion: '1.6.6',
         data: {
-          servers: [{ id: 's1', name: 'Test', transport: 'stdio' as const, enabled: 1 }],
+          servers: [{ id: 's1', name: 'Test', transport: 'stdio', enabled: 1 }],
           tools: [
             { id: 't1', server_id: 's1', tool_name: 'valid', enabled: 1 },
             { id: 't2', server_id: 'unknown-server', tool_name: 'invalid', enabled: 1 },
@@ -248,12 +249,12 @@ describe('settings-backup-service', () => {
         return { changes: 1 };
       });
 
-      const payload = {
-        version: 'konduct-backup-v1' as const,
+      const payload: BackupPayload = {
+        version: 'konduct-backup-v1',
         exportedAt: '2026-03-31T00:00:00.000Z',
         appVersion: '1.6.6',
         data: {
-          servers: [{ id: 's1', name: 'Test', transport: 'stdio' as const, enabled: 1 }],
+          servers: [{ id: 's1', name: 'Test', transport: 'stdio', enabled: 1 }],
           tools: [
             {
               id: 'local-tool-id',
@@ -290,12 +291,12 @@ describe('settings-backup-service', () => {
       mockRun.mockReturnValue({ changes: 1 });
 
       // Payload: tool with same UUID AND same id should be updated
-      const payload = {
+      const payload: BackupPayload = {
         version: 'konduct-backup-v1',
         exportedAt: '2026-03-31T00:00:00.000Z',
         appVersion: '1.6.6',
         data: {
-          servers: [{ id: 's1', name: 'Test', transport: 'stdio' as const, enabled: 1 }],
+          servers: [{ id: 's1', name: 'Test', transport: 'stdio', enabled: 1 }],
           tools: [
             { id: '550e8400-e29b-41d4-a716-446655440000', server_id: 's1', tool_name: 'discovered_tool', enabled: 1 },
           ],
@@ -315,12 +316,12 @@ describe('settings-backup-service', () => {
       mockAll.mockReturnValue([]);
       mockRun.mockReturnValue({ changes: 1 });
 
-      const payload = {
+      const payload: BackupPayload = {
         version: 'konduct-backup-v1',
         exportedAt: '2026-03-31T00:00:00.000Z',
         appVersion: '1.6.6',
         data: {
-          servers: [{ id: 's1', name: 'Test', transport: 'stdio' as const, enabled: 1 }],
+          servers: [{ id: 's1', name: 'Test', transport: 'stdio', enabled: 1 }],
           tools: [
             { id: 'some-random-id', server_id: 's1', tool_name: 'new_tool', enabled: 1 },
           ],
@@ -357,12 +358,12 @@ describe('settings-backup-service', () => {
       mockRun.mockReturnValue({ changes: 1 });
 
       // Payload: tool has id that matches existing uuid
-      const payload = {
+      const payload: BackupPayload = {
         version: 'konduct-backup-v1',
         exportedAt: '2026-03-31T00:00:00.000Z',
         appVersion: '1.6.6',
         data: {
-          servers: [{ id: 's1', name: 'Test', transport: 'stdio' as const, enabled: 1 }],
+          servers: [{ id: 's1', name: 'Test', transport: 'stdio', enabled: 1 }],
           tools: [
             { id: '660e8400-e29b-41d4-a716-446655440001', server_id: 's1', tool_name: 'discovered_tool', enabled: 1 },
           ],
@@ -394,12 +395,12 @@ describe('settings-backup-service', () => {
       mockAll.mockReturnValue([]);
       mockRun.mockReturnValue({ changes: 1 });
 
-      const payload = {
+      const payload: BackupPayload = {
         version: 'konduct-backup-v1',
         exportedAt: '2026-03-31T00:00:00.000Z',
         appVersion: '1.6.6',
         data: {
-          servers: [{ id: 's1', name: 'Test', transport: 'stdio' as const, enabled: 1 }],
+          servers: [{ id: 's1', name: 'Test', transport: 'stdio', enabled: 1 }],
           tools: [],
           projects: [{ id: 'p1', name: 'Project' }],
           projectServers: [{ projectId: 'unknown-project', serverId: 's1' }],
@@ -424,12 +425,12 @@ describe('settings-backup-service', () => {
         .mockReturnValueOnce([]); // tools for update check
       mockRun.mockReturnValue({ changes: 1 });
 
-      const payload = {
+      const payload: BackupPayload = {
         version: 'konduct-backup-v1',
         exportedAt: '2026-03-31T00:00:00.000Z',
         appVersion: '1.6.6',
         data: {
-          servers: [{ id: 's1', name: 'Test', transport: 'stdio' as const, enabled: 1 }],
+          servers: [{ id: 's1', name: 'Test', transport: 'stdio', enabled: 1 }],
           tools: [],
           projects: [{ id: 'p1', name: 'Project' }],
           projectServers: [{ projectId: 'p1', serverId: 'unknown-server' }],
@@ -459,12 +460,12 @@ describe('settings-backup-service', () => {
         return { changes: 0 };
       });
 
-      const payload = {
+      const payload: BackupPayload = {
         version: 'konduct-backup-v1',
         exportedAt: '2026-03-31T00:00:00.000Z',
         appVersion: '1.6.6',
         data: {
-          servers: [{ id: 's1', name: 'Test', transport: 'stdio' as const, enabled: 1 }],
+          servers: [{ id: 's1', name: 'Test', transport: 'stdio', enabled: 1 }],
           tools: [],
           projects: [{ id: 'p1', name: 'Project' }],
           projectServers: [
@@ -492,12 +493,12 @@ describe('settings-backup-service', () => {
       mockAll.mockReturnValue([]);
       mockRun.mockReturnValue({ changes: 1 });
 
-      const payload = {
+      const payload: BackupPayload = {
         version: 'konduct-backup-v1',
         exportedAt: '2026-03-31T00:00:00.000Z',
         appVersion: '1.6.6',
         data: {
-          servers: [{ id: 's1', name: 'Test', transport: 'stdio' as const, enabled: 1 }],
+          servers: [{ id: 's1', name: 'Test', transport: 'stdio', enabled: 1 }],
           tools: [],
           projects: [],
           projectServers: [{ projectId: 'unknown-project', serverId: 's1' }],
@@ -519,12 +520,12 @@ describe('settings-backup-service', () => {
       mockAll.mockReturnValue([]);
       mockRun.mockReturnValue({ changes: 1 });
 
-      const payload = {
+      const payload: BackupPayload = {
         version: 'konduct-backup-v1',
         exportedAt: '2026-03-31T00:00:00.000Z',
         appVersion: '1.6.6',
         data: {
-          servers: [{ id: 's1', name: 'Test', transport: 'stdio' as const, enabled: 1 }],
+          servers: [{ id: 's1', name: 'Test', transport: 'stdio', enabled: 1 }],
           tools: [],
           projects: [{ id: 'p1', name: 'Project' }],
           projectServers: [{ projectId: 'p1', serverId: 'unknown-server' }],
@@ -592,7 +593,7 @@ describe('settings-backup-service', () => {
         .mockReturnValueOnce([]) // projects by name
         .mockReturnValueOnce([]); // relations
 
-      const payload = {
+      const payload: BackupPayload = {
         version: 'konduct-backup-v1',
         exportedAt: '2026-03-31T00:00:00.000Z',
         appVersion: '1.6.6',
@@ -622,12 +623,12 @@ describe('settings-backup-service', () => {
         .mockReturnValueOnce([]) // projects by name
         .mockReturnValueOnce([]); // relations
 
-      const payload = {
+      const payload: BackupPayload = {
         version: 'konduct-backup-v1',
         exportedAt: '2026-03-31T00:00:00.000Z',
         appVersion: '1.6.6',
         data: {
-          servers: [{ id: 's1', name: 'Test', transport: 'stdio' as const, enabled: 1 }],
+          servers: [{ id: 's1', name: 'Test', transport: 'stdio', enabled: 1 }],
           tools: [],
           projects: [],
           projectServers: [{ projectId: 'ghost-project', serverId: 's1' }],
@@ -649,12 +650,12 @@ describe('settings-backup-service', () => {
         .mockReturnValueOnce([{ name: 'Project' }]) // projects by name
         .mockReturnValueOnce([{ project_id: 'p1', server_id: 's1' }]); // relations (already exists)
 
-      const payload = {
+      const payload: BackupPayload = {
         version: 'konduct-backup-v1',
         exportedAt: '2026-03-31T00:00:00.000Z',
         appVersion: '1.6.6',
         data: {
-          servers: [{ id: 's1', name: 'Test', transport: 'stdio' as const, enabled: 1 }],
+          servers: [{ id: 's1', name: 'Test', transport: 'stdio', enabled: 1 }],
           tools: [],
           projects: [{ id: 'p1', name: 'Project' }],
           projectServers: [{ projectId: 'p1', serverId: 's1' }],
