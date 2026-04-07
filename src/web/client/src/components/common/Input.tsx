@@ -17,27 +17,27 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full space-y-2">
         {label && (
-          <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">
+          <label className="ml-1 text-sm font-bold text-foreground">
             {label}
           </label>
         )}
         <input
           type={type}
           className={cn(
-            'flex h-12 w-full rounded-xl border-2 bg-white dark:bg-slate-900 px-4 py-2 text-sm transition-all file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50',
+            'flex h-12 w-full rounded-xl border-2 bg-surface px-4 py-2 text-sm text-foreground shadow-soft transition-all file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-foreground-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
             error
-              ? 'border-rose-500 focus-visible:border-rose-500'
-              : 'border-slate-200 dark:border-slate-800 focus-visible:border-primary',
+              ? 'border-error focus-visible:border-error'
+              : 'border-border focus-visible:border-primary',
             className
           )}
           ref={ref}
           {...props}
         />
         {error && (
-          <p className="text-xs font-bold text-rose-500 ml-1">{error}</p>
+          <p className="ml-1 text-xs font-bold text-error">{error}</p>
         )}
         {helperText && !error && (
-          <p className="text-xs text-slate-500 dark:text-slate-400 ml-1">{helperText}</p>
+          <p className="ml-1 text-xs text-foreground-muted">{helperText}</p>
         )}
       </div>
     );

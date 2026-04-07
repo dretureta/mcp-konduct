@@ -19,8 +19,8 @@ export const Card: React.FC<CardProps> = ({
   ...props
 }) => {
   const variants = {
-    default: 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm',
-    outline: 'border-2 border-slate-200 dark:border-slate-800',
+    default: 'bg-surface border border-border shadow-soft',
+    outline: 'border-2 border-border bg-surface',
     ghost: 'bg-transparent border-none shadow-none',
   };
 
@@ -29,7 +29,7 @@ export const Card: React.FC<CardProps> = ({
       className={cn(
         'rounded-2xl transition-all duration-300',
         variants[variant],
-        hover && 'hover:shadow-lg hover:border-primary/30 dark:hover:border-primary/50',
+        hover && 'hover:shadow-medium hover:border-primary/30',
         className
       )}
       {...props}
