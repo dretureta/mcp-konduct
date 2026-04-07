@@ -77,8 +77,8 @@ export const Servers: React.FC = () => {
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Servers</h1>
-          <p className="text-slate-500 dark:text-slate-400 font-medium">Manage and configure your MCP servers</p>
+          <h1 className="text-4xl font-black tracking-tight text-foreground">Servers</h1>
+          <p className="font-medium text-foreground-muted">Manage and configure your MCP servers</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
           <Button
@@ -110,10 +110,10 @@ export const Servers: React.FC = () => {
       >
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">JSON Payload</label>
+            <label className="text-sm font-bold text-foreground">JSON Payload</label>
             <textarea
               rows={10}
-              className="w-full bg-slate-100 dark:bg-slate-800 border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono text-xs"
+              className="w-full rounded-xl border border-transparent bg-background-subtle px-4 py-2.5 font-mono text-xs text-foreground outline-none transition-all focus:border-primary focus:ring-4 focus:ring-ring"
               placeholder='{"mcpServers": {"brave-search": {"command": "docker", "args": ["run", "-i"]}}}'
               value={jsonInput}
               onChange={(e) => setJsonInput(e.target.value)}
@@ -121,22 +121,22 @@ export const Servers: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-sm font-bold cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-background-subtle px-4 py-2 text-sm font-bold text-foreground transition-colors hover:bg-muted">
               <Upload size={16} />
               Upload JSON file
               <input type="file" accept="application/json" className="hidden" onChange={handleImportFile} />
             </label>
-            <span className="text-xs text-slate-500">Supports OpenCode-style `mcpServers` format.</span>
+            <span className="text-xs text-foreground-muted">Supports OpenCode-style `mcpServers` format.</span>
           </div>
 
           {importError && (
-            <div className="text-sm text-rose-500 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-900 rounded-xl p-3">
+            <div className="rounded-xl border border-error-border bg-error-soft p-3 text-sm text-error">
               {importError}
             </div>
           )}
 
           {importResult && (
-            <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-y-2">
+            <div className="space-y-2 rounded-xl border border-border bg-background-subtle p-4">
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant="success">Created: {importResult.summary.created}</Badge>
                 <Badge variant="primary">Updated: {importResult.summary.updated}</Badge>
@@ -146,7 +146,7 @@ export const Servers: React.FC = () => {
                 </Badge>
               </div>
               {importResult.messages.length > 0 && (
-                <ul className="list-disc pl-5 text-xs text-slate-600 dark:text-slate-300 space-y-1">
+                <ul className="list-disc space-y-1 pl-5 text-xs text-foreground-muted">
                   {importResult.messages.map((message, idx) => (
                     <li key={`${idx}-${message}`}>{message}</li>
                   ))}
@@ -244,8 +244,8 @@ const ServerCard: React.FC<{
     <Card hover className="group h-full flex flex-col">
       <div className="p-6 flex-1 space-y-4">
         <div className="flex items-start justify-between">
-          <div className={`p-3 rounded-xl transition-colors ${
-            server.enabled ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-400 dark:bg-slate-800'
+          <div className={`rounded-xl p-3 transition-colors ${
+            server.enabled ? 'bg-primary/12 text-primary' : 'bg-muted text-foreground-muted'
           }`}>
             <ServerIcon size={24} />
           </div>
@@ -256,7 +256,7 @@ const ServerCard: React.FC<{
                 size="icon"
                 onClick={onDiscover}
                 disabled={isDiscovering}
-                className={isDiscovering ? "text-primary animate-spin" : "text-slate-400 hover:text-primary"}
+                className={isDiscovering ? 'animate-spin text-primary' : 'text-foreground-muted hover:text-primary'}
               >
                 <RefreshCcw size={18} className={isDiscovering ? "animate-spin" : ""} />
               </Button>
@@ -266,7 +266,7 @@ const ServerCard: React.FC<{
                 variant="ghost" 
                 size="icon"
                 onClick={onEdit}
-                className="text-slate-400 hover:text-primary"
+                className="text-foreground-muted hover:text-primary"
               >
                 <Settings2 size={18} />
               </Button>
@@ -276,7 +276,7 @@ const ServerCard: React.FC<{
                 variant="ghost" 
                 size="icon"
                 onClick={onDelete}
-                className="text-slate-400 hover:text-rose-500"
+                className="text-foreground-muted hover:text-error"
               >
                 <Trash2 size={18} />
               </Button>
@@ -285,35 +285,35 @@ const ServerCard: React.FC<{
         </div>
 
         <div>
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white truncate" title={server.name}>
+          <h3 className="truncate text-lg font-bold text-foreground" title={server.name}>
             {server.name}
           </h3>
           <div className="flex items-center gap-2 mt-1">
             <Badge variant="secondary">{server.transport}</Badge>
-            <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
-            <span className="font-mono text-[10px] text-slate-400 truncate">{server.id}</span>
+            <span className="h-1 w-1 rounded-full bg-border-strong" />
+            <span className="truncate font-mono text-[10px] text-foreground-muted">{server.id}</span>
           </div>
         </div>
 
         <div className="space-y-2">
           {server.url && (
-            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 px-3 py-2 rounded-lg text-[10px] font-mono text-slate-500 truncate group-hover:bg-slate-100 dark:group-hover:bg-slate-800 transition-colors">
+            <div className="flex items-center gap-2 rounded-lg bg-background-subtle px-3 py-2 font-mono text-[10px] text-foreground-muted transition-colors group-hover:bg-muted truncate">
               <ExternalLink size={12} className="shrink-0" />
               {server.url}
             </div>
           )}
           {server.command && (
-            <div className="bg-slate-50 dark:bg-slate-800/50 px-3 py-2 rounded-lg text-[10px] font-mono text-slate-500 truncate group-hover:bg-slate-100 dark:group-hover:bg-slate-800 transition-colors">
+            <div className="truncate rounded-lg bg-background-subtle px-3 py-2 font-mono text-[10px] text-foreground-muted transition-colors group-hover:bg-muted">
               <span className="text-primary font-bold mr-1">$</span> {server.command} {server.args?.join(' ')}
             </div>
           )}
           {server.env && Object.keys(server.env).length > 0 && (
-            <div className="bg-slate-50 dark:bg-slate-800/50 px-3 py-2 rounded-lg text-[10px] font-mono text-slate-500 group-hover:bg-slate-100 dark:group-hover:bg-slate-800 transition-colors">
-              <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="rounded-lg bg-background-subtle px-3 py-2 font-mono text-[10px] text-foreground-muted transition-colors group-hover:bg-muted">
+              <div className="flex flex-wrap items-center gap-1.5">
                 <span className="text-primary font-bold">ENV</span>
-                <span className="text-slate-400">({Object.keys(server.env).length})</span>
+                <span className="text-foreground-muted">({Object.keys(server.env).length})</span>
                 {Object.entries(server.env).slice(0, 3).map(([key, value]) => (
-                  <span key={key} className="inline-flex items-center gap-0.5 bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-600 dark:text-slate-300">
+                  <span key={key} className="inline-flex items-center gap-0.5 rounded bg-muted px-1.5 py-0.5 text-foreground">
                     <span className="font-semibold">{key}</span>
                     <span>=</span>
                     <span>{value.length > 4 ? '••••••' : '••'}</span>
