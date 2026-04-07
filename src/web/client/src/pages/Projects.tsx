@@ -160,8 +160,8 @@ export const Projects: React.FC = () => {
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Projects</h1>
-          <p className="text-slate-500 dark:text-slate-400 font-medium">Group your servers into logical projects</p>
+          <h1 className="text-4xl font-black text-foreground tracking-tight">Projects</h1>
+          <p className="text-muted-foreground font-medium">Group your servers into logical projects</p>
         </div>
         <Button
           onClick={() => setIsModalOpen(true)}
@@ -184,19 +184,19 @@ export const Projects: React.FC = () => {
             helperText="A clear, concise name for your collection of servers."
           />
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Description</label>
+            <label className="text-sm font-bold text-foreground">Description</label>
             <textarea
-              className="w-full bg-slate-100 dark:bg-slate-800 border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all"
+              className="w-full bg-muted border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all"
               placeholder="What is this project for?"
               rows={3}
               value={newProjectDescription}
               onChange={(e) => setNewProjectDescription(e.target.value)}
             />
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-muted-foreground">
               Optional context shown on project cards to help explain the collection.
             </p>
           </div>
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
             <Button
               type="button"
               variant="secondary"
@@ -225,25 +225,25 @@ export const Projects: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="space-y-3">
-              <h4 className="text-sm font-black uppercase tracking-wider text-slate-500">Connected Servers</h4>
+              <h4 className="text-sm font-black uppercase tracking-wider text-muted-foreground">Connected Servers</h4>
               {projectServers.length === 0 ? (
-                <p className="text-sm text-slate-500 dark:text-slate-400 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40">
+                <p className="text-sm text-muted-foreground p-4 rounded-xl bg-muted">
                   No servers linked yet.
                 </p>
               ) : (
                 <div className="space-y-2">
                   {projectServers.map((server) => (
-                    <div key={server.id} className="flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <div key={server.id} className="flex items-center justify-between p-3 rounded-xl border border-border">
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{server.name}</p>
-                        <p className="text-[10px] font-mono text-slate-500 uppercase">{server.transport}</p>
+                        <p className="text-sm font-bold text-foreground truncate">{server.name}</p>
+                        <p className="text-[10px] font-mono text-muted-foreground uppercase">{server.transport}</p>
                       </div>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => removeServerFromProject(server.id)}
                         disabled={isManageLoading}
-                        className="text-rose-500 hover:text-rose-600"
+                        className="text-error hover:text-error"
                       >
                         <Unlink2 size={14} />
                         Remove
@@ -255,25 +255,25 @@ export const Projects: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              <h4 className="text-sm font-black uppercase tracking-wider text-slate-500">Available Servers</h4>
+              <h4 className="text-sm font-black uppercase tracking-wider text-muted-foreground">Available Servers</h4>
               {availableServers.length === 0 ? (
-                <p className="text-sm text-slate-500 dark:text-slate-400 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40">
+                <p className="text-sm text-muted-foreground p-4 rounded-xl bg-muted">
                   All servers are already connected.
                 </p>
               ) : (
                 <div className="space-y-2">
                   {availableServers.map((server) => (
-                    <div key={server.id} className="flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <div key={server.id} className="flex items-center justify-between p-3 rounded-xl border border-border">
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{server.name}</p>
-                        <p className="text-[10px] font-mono text-slate-500 uppercase">{server.transport}</p>
+                        <p className="text-sm font-bold text-foreground truncate">{server.name}</p>
+                        <p className="text-[10px] font-mono text-muted-foreground uppercase">{server.transport}</p>
                       </div>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => addServerToProject(server.id)}
                         disabled={isManageLoading}
-                        className="text-emerald-500 hover:text-emerald-600"
+                        className="text-success hover:text-success"
                       >
                         <Link2 size={14} />
                         Add
@@ -299,19 +299,19 @@ export const Projects: React.FC = () => {
             helperText="Update the display name for this project."
           />
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Description</label>
+            <label className="text-sm font-bold text-foreground">Description</label>
             <textarea
-              className="w-full bg-slate-100 dark:bg-slate-800 border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all"
+              className="w-full bg-muted border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all"
               placeholder="What is this project for?"
               rows={3}
               value={editProjectDescription}
               onChange={(e) => setEditProjectDescription(e.target.value)}
             />
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-muted-foreground">
               Optional context shown on project cards to explain the collection.
             </p>
           </div>
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
             <Button type="button" variant="secondary" onClick={closeEditModal}>
               Cancel
             </Button>
@@ -350,7 +350,7 @@ export const Projects: React.FC = () => {
                         size="icon"
                         aria-label="Edit project"
                         onClick={() => openEditModal(project)}
-                        className="text-slate-400 hover:text-primary"
+                        className="text-muted-foreground hover:text-primary"
                       >
                         <Pencil size={18} />
                       </Button>
@@ -364,7 +364,7 @@ export const Projects: React.FC = () => {
                             deleteProject(project.id);
                           }
                         }}
-                        className="text-slate-400 hover:text-rose-500"
+                        className="text-muted-foreground hover:text-error"
                       >
                         <Trash2 size={18} />
                       </Button>
@@ -372,8 +372,8 @@ export const Projects: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{project.name}</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                  <h3 className="text-xl font-bold text-foreground mb-2">{project.name}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     {project.description || 'No description provided for this project.'}
                   </p>
                 </div>
@@ -381,7 +381,7 @@ export const Projects: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   onClick={() => toggleProjectDetails(project)}
-                  className="justify-start px-0 text-slate-500 hover:text-primary"
+                  className="justify-start px-0 text-muted-foreground hover:text-primary"
                 >
                   <ChevronDown
                     size={14}
@@ -390,17 +390,17 @@ export const Projects: React.FC = () => {
                   {expandedProjectId === project.id ? 'Hide project scope' : 'Show project scope'}
                 </Button>
                 {expandedProjectId === project.id && (
-                  <div className="space-y-4 rounded-xl border border-slate-200 dark:border-slate-800 p-4 bg-slate-50 dark:bg-slate-900/40">
+                  <div className="space-y-4 rounded-xl border border-border p-4 bg-muted">
                     {loadingProjectDetails === project.id ? (
                       <Loading label="Loading project scope..." className="py-4" />
                     ) : projectDetails[project.id] ? (
                       <>
                         <div>
-                          <p className="text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+                          <p className="text-xs font-black uppercase tracking-wider text-muted-foreground mb-2">
                             Servers ({projectDetails[project.id].summary.serverCount})
                           </p>
                           {projectDetails[project.id].servers.length === 0 ? (
-                            <p className="text-xs text-slate-500">No linked servers</p>
+                            <p className="text-xs text-muted-foreground">No linked servers</p>
                           ) : (
                             <div className="flex flex-wrap gap-2">
                               {projectDetails[project.id].servers.map((server) => (
@@ -412,15 +412,15 @@ export const Projects: React.FC = () => {
                           )}
                         </div>
                         <div>
-                          <p className="text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+                          <p className="text-xs font-black uppercase tracking-wider text-muted-foreground mb-2">
                             Tools ({projectDetails[project.id].summary.toolCount})
                           </p>
                           {projectDetails[project.id].tools.length === 0 ? (
-                            <p className="text-xs text-slate-500">No discovered tools in this scope</p>
+                            <p className="text-xs text-muted-foreground">No discovered tools in this scope</p>
                           ) : (
-                            <div className="max-h-28 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2 py-1">
+                            <div className="max-h-28 overflow-y-auto rounded-lg border border-border bg-surface px-2 py-1">
                               {projectDetails[project.id].tools.map((tool) => (
-                                <p key={tool.id} className="text-[11px] font-mono text-slate-700 dark:text-slate-300 py-1">
+                                <p key={tool.id} className="text-[11px] font-mono text-foreground py-1">
                                   {tool.toolName}
                                 </p>
                               ))}
@@ -428,17 +428,17 @@ export const Projects: React.FC = () => {
                           )}
                         </div>
                         <div>
-                          <p className="text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+                          <p className="text-xs font-black uppercase tracking-wider text-muted-foreground mb-2">
                             MCP command
                           </p>
-                          <div className="rounded-lg bg-slate-900 text-slate-100 text-[11px] font-mono px-3 py-2 break-all">
+                          <div className="rounded-lg bg-foreground text-foreground-inverted text-[11px] font-mono px-3 py-2 break-all">
                             {projectDetails[project.id].config.command}
                           </div>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => copyProjectCommand(projectDetails[project.id].config.command)}
-                            className="mt-2 text-slate-500 hover:text-primary"
+                            className="mt-2 text-muted-foreground hover:text-primary"
                           >
                             <Copy size={13} />
                             Copy command
@@ -449,7 +449,7 @@ export const Projects: React.FC = () => {
                   </div>
                 )}
               </div>
-              <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between rounded-b-2xl">
+              <div className="px-6 py-4 bg-muted border-t border-border flex items-center justify-between rounded-b-2xl">
                 <Badge variant="secondary" size="md">
                   {project.serverCount || 0} Servers
                 </Badge>

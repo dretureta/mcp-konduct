@@ -118,16 +118,16 @@ export const Settings: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
       <div>
-        <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Settings</h1>
-        <p className="text-slate-500 dark:text-slate-400 font-medium">Manage backup, restore, and system preferences</p>
+        <h1 className="text-4xl font-black text-foreground tracking-tight">Settings</h1>
+        <p className="text-muted-foreground font-medium">Manage backup, restore, and system preferences</p>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <Card className="xl:col-span-2 p-6 space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Backup & Restore</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Export or import your MCP configuration snapshot.</p>
+              <h2 className="text-2xl font-bold text-foreground">Backup & Restore</h2>
+              <p className="text-sm text-muted-foreground">Export or import your MCP configuration snapshot.</p>
             </div>
             <Badge variant="primary" size="md">konduct-backup-v1</Badge>
           </div>
@@ -147,12 +147,12 @@ export const Settings: React.FC = () => {
               label="Import Backup File"
             />
             {fileName && (
-              <p className="text-xs text-slate-500 dark:text-slate-400">Selected file: {fileName}</p>
+              <p className="text-xs text-muted-foreground">Selected file: {fileName}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Import Mode</p>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Import Mode</p>
             <div className="flex gap-2">
               <Button
                 type="button"
@@ -170,7 +170,7 @@ export const Settings: React.FC = () => {
               </Button>
             </div>
             {mode === 'replace' && (
-              <div className="flex items-center gap-2 text-rose-500 text-sm">
+              <div className="flex items-center gap-2 text-error text-sm">
                 <AlertTriangle size={16} />
                 Replace mode overwrites your current configuration.
               </div>
@@ -199,21 +199,21 @@ export const Settings: React.FC = () => {
           </div>
 
           {error && (
-            <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30 text-rose-600 dark:text-rose-400 text-sm">
+            <div className="p-4 rounded-xl bg-error-soft border border-error-border text-error text-sm">
               {error}
             </div>
           )}
 
           {resultMessage && (
-            <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-sm flex items-center gap-2">
+            <div className="p-4 rounded-xl bg-success-soft border border-success-border text-success text-sm flex items-center gap-2">
               <CheckCircle2 size={16} />
               {resultMessage}
             </div>
           )}
 
           {preview && (
-            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/40 space-y-3">
-              <h3 className="font-bold text-slate-900 dark:text-white">Import Summary</h3>
+            <div className="p-4 rounded-xl border border-border bg-muted space-y-3">
+              <h3 className="font-bold text-foreground">Import Summary</h3>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
                 <Badge variant="secondary">Created: {preview.summary.created}</Badge>
                 <Badge variant="secondary">Updated: {preview.summary.updated}</Badge>
@@ -224,7 +224,7 @@ export const Settings: React.FC = () => {
                 </Badge>
               </div>
               {preview.messages.length > 0 && (
-                <ul className="text-xs text-slate-600 dark:text-slate-300 space-y-1 list-disc pl-5">
+                <ul className="text-xs text-foreground space-y-1 list-disc pl-5">
                   {preview.messages.map((message, index) => (
                     <li key={`${message}-${index}`}>{message}</li>
                   ))}
@@ -237,16 +237,16 @@ export const Settings: React.FC = () => {
         <Card className="p-6 space-y-4">
           <div className="flex items-center gap-2">
             <Database size={20} className="text-primary" />
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Database</h2>
+            <h2 className="text-xl font-bold text-foreground">Database</h2>
           </div>
           <div className="space-y-2">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Path</p>
-            <p className="text-xs font-mono break-all text-slate-700 dark:text-slate-300">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Path</p>
+            <p className="text-xs font-mono break-all text-foreground">
               {stats?.dbPath || 'Unavailable'}
             </p>
           </div>
           <div className="space-y-2">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Status</p>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Status</p>
             <Badge variant={stats?.dbPath ? 'success' : 'secondary'}>
               {stats?.dbPath ? 'Connected' : 'Unknown'}
             </Badge>

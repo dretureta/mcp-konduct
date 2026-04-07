@@ -39,10 +39,10 @@ export const Tools: React.FC = () => {
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Tools</h1>
-          <p className="text-slate-500 dark:text-slate-400 font-medium">Manage individual tools discovered from your servers</p>
+          <h1 className="text-4xl font-black text-foreground tracking-tight">Tools</h1>
+          <p className="text-muted-foreground font-medium">Manage individual tools discovered from your servers</p>
         </div>
-        <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="flex items-center gap-3 bg-surface p-1.5 rounded-2xl border border-border shadow-sm">
           <Badge variant="primary" size="md" className="px-4 py-2">
             {tools.length} Total
           </Badge>
@@ -60,13 +60,13 @@ export const Tools: React.FC = () => {
             onChange={(e) => setLocalSearchQuery(e.target.value)}
             className="pl-12"
           />
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
         </div>
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative min-w-[240px]">
-            <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
             <select
-              className="w-full bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 focus:border-primary rounded-xl h-12 pl-12 pr-10 outline-none appearance-none transition-all text-sm font-bold text-slate-700 dark:text-slate-300 shadow-sm"
+              className="w-full bg-surface border-2 border-border focus:border-primary rounded-xl h-12 pl-12 pr-10 outline-none appearance-none transition-all text-sm font-bold text-foreground shadow-sm"
               value={serverFilter}
               onChange={(e) => setServerFilter(e.target.value)}
             >
@@ -75,7 +75,7 @@ export const Tools: React.FC = () => {
                 <option key={server.id} value={server.id}>{server.name}</option>
               ))}
             </select>
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
               <Filter size={14} />
             </div>
           </div>
@@ -86,14 +86,14 @@ export const Tools: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
-                <th className="px-8 py-5 text-left text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Tool Name</th>
-                <th className="px-8 py-5 text-left text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Source Server</th>
-                <th className="px-8 py-5 text-left text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Status</th>
-                <th className="px-8 py-5 text-right text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Actions</th>
+              <tr className="bg-muted border-b border-border">
+                <th className="px-8 py-5 text-left text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">Tool Name</th>
+                <th className="px-8 py-5 text-left text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">Source Server</th>
+                <th className="px-8 py-5 text-left text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">Status</th>
+                <th className="px-8 py-5 text-right text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-border">
               {paginatedTools.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-8 py-20">
@@ -109,26 +109,26 @@ export const Tools: React.FC = () => {
                 </tr>
               ) : (
                 paginatedTools.map((tool) => (
-                  <tr key={tool.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
+                  <tr key={tool.id} className="hover:bg-muted transition-colors group">
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
                         <div className={`p-2.5 rounded-xl transition-colors ${
                           tool.enabled 
                             ? 'bg-primary/10 text-primary group-hover:bg-primary/20' 
-                            : 'bg-slate-100 text-slate-400 dark:bg-slate-800'
+                            : 'bg-muted text-muted-foreground'
                         }`}>
                           <Wrench size={20} />
                         </div>
                         <div className="flex flex-col">
-                          <span className="font-bold text-slate-900 dark:text-white leading-none mb-1">{tool.toolName}</span>
-                          <span className="text-[10px] font-mono text-slate-400 uppercase tracking-tighter">ID: {tool.id.substring(0, 8)}</span>
+                          <span className="font-bold text-foreground leading-none mb-1">{tool.toolName}</span>
+                          <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-tighter">ID: {tool.id.substring(0, 8)}</span>
                         </div>
                       </div>
                     </td>
                     <td className="px-8 py-5">
-                      <div className="flex items-center gap-2.5 text-sm font-bold text-slate-600 dark:text-slate-400">
-                        <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                          <ServerIcon size={14} className="text-slate-500" />
+                      <div className="flex items-center gap-2.5 text-sm font-bold text-muted-foreground">
+                        <div className="p-1.5 bg-muted rounded-lg">
+                          <ServerIcon size={14} className="text-muted-foreground" />
                         </div>
                         {serverMap.get(tool.serverId) || 'Unknown Server'}
                       </div>
@@ -144,7 +144,7 @@ export const Tools: React.FC = () => {
                           variant="ghost"
                           size="icon"
                           onClick={() => toggleTool(tool.id)}
-                          className={tool.enabled ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}
+                          className={tool.enabled ? 'text-success hover:bg-success-soft' : 'text-muted-foreground hover:bg-muted'}
                         >
                           <Power size={20} />
                         </Button>
@@ -159,11 +159,11 @@ export const Tools: React.FC = () => {
       </Card>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-4 bg-white dark:bg-slate-900 border border-t-0 border-slate-200 dark:border-slate-800 rounded-b-2xl">
-          <div className="text-sm text-slate-500 dark:text-slate-400">
-            Showing <span className="font-bold text-slate-700 dark:text-slate-300">{(currentPage - 1) * PAGE_SIZE + 1}</span> to{' '}
-            <span className="font-bold text-slate-700 dark:text-slate-300">{Math.min(currentPage * PAGE_SIZE, filteredTools.length)}</span> of{' '}
-            <span className="font-bold text-slate-700 dark:text-slate-300">{filteredTools.length}</span> tools
+        <div className="flex items-center justify-between px-4 py-4 bg-surface border border-t-0 border-border rounded-b-2xl">
+          <div className="text-sm text-muted-foreground">
+            Showing <span className="font-bold text-foreground">{(currentPage - 1) * PAGE_SIZE + 1}</span> to{' '}
+            <span className="font-bold text-foreground">{Math.min(currentPage * PAGE_SIZE, filteredTools.length)}</span> of{' '}
+            <span className="font-bold text-foreground">{filteredTools.length}</span> tools
           </div>
           <div className="flex items-center gap-2">
             <Button

@@ -49,20 +49,20 @@ export const ServerForm: React.FC<ServerFormProps> = ({ initialData, onSubmit, o
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Server Name</label>
+          <label className="text-sm font-bold text-foreground">Server Name</label>
           <input
             required
             type="text"
-            className="w-full bg-slate-100 dark:bg-slate-800 border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all"
+            className="w-full bg-muted border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all"
             placeholder="e.g., File System"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Transport</label>
+          <label className="text-sm font-bold text-foreground">Transport</label>
           <select
-            className="w-full bg-slate-100 dark:bg-slate-800 border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all"
+            className="w-full bg-muted border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all"
             value={formData.transport}
             onChange={(e) => setFormData({ ...formData, transport: e.target.value as TransportType })}
           >
@@ -76,20 +76,20 @@ export const ServerForm: React.FC<ServerFormProps> = ({ initialData, onSubmit, o
       {formData.transport === 'stdio' ? (
         <>
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Command</label>
+            <label className="text-sm font-bold text-foreground">Command</label>
             <input
               required
               type="text"
-              className="w-full bg-slate-100 dark:bg-slate-800 border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono"
+              className="w-full bg-muted border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono"
               placeholder="e.g., npx"
               value={formData.command}
               onChange={(e) => setFormData({ ...formData, command: e.target.value })}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Arguments (comma separated)</label>
+            <label className="text-sm font-bold text-foreground">Arguments (comma separated)</label>
             <textarea
-              className="w-full bg-slate-100 dark:bg-slate-800 border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono"
+              className="w-full bg-muted border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono"
               placeholder="e.g., -y, @modelcontextprotocol/server-filesystem, /tmp"
               rows={3}
               value={argsString}
@@ -97,11 +97,11 @@ export const ServerForm: React.FC<ServerFormProps> = ({ initialData, onSubmit, o
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">
-              KEY=VALUE Environment Variables <span className="font-normal text-slate-400">(one per line)</span>
+            <label className="text-sm font-bold text-foreground">
+              KEY=VALUE Environment Variables <span className="font-normal text-muted-foreground">(one per line)</span>
             </label>
             <textarea
-              className="w-full bg-slate-100 dark:bg-slate-800 border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono"
+              className="w-full bg-muted border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono"
               placeholder={"API_KEY=your_key\nANOTHER_VAR=value"}
               rows={3}
               value={envString}
@@ -112,22 +112,22 @@ export const ServerForm: React.FC<ServerFormProps> = ({ initialData, onSubmit, o
       ) : (
         <>
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">URL</label>
+            <label className="text-sm font-bold text-foreground">URL</label>
             <input
               required
               type="url"
-              className="w-full bg-slate-100 dark:bg-slate-800 border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono"
+              className="w-full bg-muted border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono"
               placeholder="http://localhost:3000"
               value={formData.url}
               onChange={(e) => setFormData({ ...formData, url: e.target.value })}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">
-              KEY=VALUE Environment Variables <span className="font-normal text-slate-400">(one per line)</span>
+            <label className="text-sm font-bold text-foreground">
+              KEY=VALUE Environment Variables <span className="font-normal text-muted-foreground">(one per line)</span>
             </label>
             <textarea
-              className="w-full bg-slate-100 dark:bg-slate-800 border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono"
+              className="w-full bg-muted border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono"
               placeholder={"API_KEY=your_key\nANOTHER_VAR=value"}
               rows={3}
               value={envString}
@@ -137,11 +137,11 @@ export const ServerForm: React.FC<ServerFormProps> = ({ initialData, onSubmit, o
         </>
       )}
 
-      <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+      <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
         <button
           type="button"
           onClick={onCancel}
-          className="px-6 py-2.5 rounded-xl font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+          className="px-6 py-2.5 rounded-xl font-bold text-muted-foreground hover:bg-muted transition-all"
         >
           Cancel
         </button>
