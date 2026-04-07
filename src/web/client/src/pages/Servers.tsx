@@ -320,7 +320,7 @@ const ServerCard: React.FC<{
                   </span>
                 ))}
                 {Object.keys(server.env).length > 3 && (
-                  <span className="text-slate-400">+{Object.keys(server.env).length - 3} more</span>
+                  <span className="text-muted-foreground">+{Object.keys(server.env).length - 3} more</span>
                 )}
               </div>
             </div>
@@ -328,10 +328,10 @@ const ServerCard: React.FC<{
         </div>
       </div>
 
-      <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between rounded-b-2xl">
+      <div className="px-6 py-4 bg-muted border-t border-border flex items-center justify-between rounded-b-2xl">
         <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${server.enabled ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300 dark:bg-slate-700'}`} />
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+          <div className={`w-2 h-2 rounded-full ${server.enabled ? 'bg-success animate-pulse' : 'bg-muted'}`} />
+          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             {server.enabled ? 'Enabled' : 'Disabled'}
           </span>
         </div>
@@ -339,7 +339,7 @@ const ServerCard: React.FC<{
           <button
             onClick={onToggle}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-              server.enabled ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'
+              server.enabled ? 'bg-primary' : 'bg-muted'
             }`}
           >
             <span

@@ -11,15 +11,15 @@ describe('Button', () => {
       expect(html).toContain('bg-primary');
     });
 
-    it('danger variant should use semantic token (e.g. bg-danger) instead of rose-500', () => {
+    it('danger variant should use semantic token (bg-error) instead of rose-500', () => {
       const html = renderToStaticMarkup(
         <Button variant="danger">Delete</Button>
       );
       // After refactor, should NOT contain hardcoded rose
       expect(html).not.toContain('rose-500');
       expect(html).not.toContain('rose-600');
-      // Should use semantic token instead
-      expect(html).toContain('bg-danger');
+      // Should use semantic token bg-error instead of non-existent bg-danger
+      expect(html).toContain('bg-error');
     });
   });
 });
