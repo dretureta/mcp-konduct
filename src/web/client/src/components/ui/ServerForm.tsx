@@ -98,7 +98,7 @@ export const ServerForm: React.FC<ServerFormProps> = ({ initialData, onSubmit, o
           </div>
           <div className="space-y-2">
             <label className="text-sm font-bold text-foreground">
-              KEY=VALUE Environment Variables <span className="font-normal text-muted-foreground">(one per line)</span>
+              KEY=VALUE Environment Variables <span className="font-normal text-foreground-muted">(one per line)</span>
             </label>
             <textarea
               className="w-full bg-muted border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono"
@@ -124,7 +124,7 @@ export const ServerForm: React.FC<ServerFormProps> = ({ initialData, onSubmit, o
           </div>
           <div className="space-y-2">
             <label className="text-sm font-bold text-foreground">
-              KEY=VALUE Environment Variables <span className="font-normal text-muted-foreground">(one per line)</span>
+              KEY=VALUE Environment Variables <span className="font-normal text-foreground-muted">(one per line)</span>
             </label>
             <textarea
               className="w-full bg-muted border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono"
@@ -141,7 +141,7 @@ export const ServerForm: React.FC<ServerFormProps> = ({ initialData, onSubmit, o
         <button
           type="button"
           onClick={onCancel}
-          className="px-6 py-2.5 rounded-xl font-bold text-muted-foreground hover:bg-muted transition-all"
+          className="px-6 py-2.5 rounded-xl font-bold text-foreground-muted hover:bg-muted transition-all"
         >
           Cancel
         </button>

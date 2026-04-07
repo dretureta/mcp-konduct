@@ -320,7 +320,7 @@ const ServerCard: React.FC<{
                   </span>
                 ))}
                 {Object.keys(server.env).length > 3 && (
-                  <span className="text-muted-foreground">+{Object.keys(server.env).length - 3} more</span>
+                  <span className="text-foreground-muted">+{Object.keys(server.env).length - 3} more</span>
                 )}
               </div>
             </div>
@@ -331,7 +331,7 @@ const ServerCard: React.FC<{
       <div className="px-6 py-4 bg-muted border-t border-border flex items-center justify-between rounded-b-2xl">
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${server.enabled ? 'bg-success animate-pulse' : 'bg-muted'}`} />
-          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          <span className="text-xs font-bold uppercase tracking-wider text-foreground-muted">
             {server.enabled ? 'Enabled' : 'Disabled'}
           </span>
         </div>

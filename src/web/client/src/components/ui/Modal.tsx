@@ -28,7 +28,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div 
-        className="absolute inset-0 bg-foreground/60 backdrop-blur-sm animate-in fade-in duration-300" 
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" 
         onClick={onClose}
       />
       <div className="bg-surface w-full max-w-2xl rounded-2xl shadow-2xl border border-border relative z-10 animate-in zoom-in-95 duration-300 overflow-hidden">
@@ -36,7 +36,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
           <h3 className="text-xl font-bold text-foreground">{title}</h3>
           <button 
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
+            className="p-2 rounded-lg hover:bg-muted text-foreground-muted transition-colors"
           >
             <X size={20} />
           </button>

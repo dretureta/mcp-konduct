@@ -40,7 +40,7 @@ export const Tools: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-4xl font-black text-foreground tracking-tight">Tools</h1>
-          <p className="text-muted-foreground font-medium">Manage individual tools discovered from your servers</p>
+          <p className="text-foreground-muted font-medium">Manage individual tools discovered from your servers</p>
         </div>
         <div className="flex items-center gap-3 bg-surface p-1.5 rounded-2xl border border-border shadow-sm">
           <Badge variant="primary" size="md" className="px-4 py-2">
@@ -60,11 +60,11 @@ export const Tools: React.FC = () => {
             onChange={(e) => setLocalSearchQuery(e.target.value)}
             className="pl-12"
           />
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground-muted" size={20} />
         </div>
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative min-w-[240px]">
-            <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+            <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground-muted" size={18} />
             <select
               className="w-full bg-surface border-2 border-border focus:border-primary rounded-xl h-12 pl-12 pr-10 outline-none appearance-none transition-all text-sm font-bold text-foreground shadow-sm"
               value={serverFilter}
@@ -75,7 +75,7 @@ export const Tools: React.FC = () => {
                 <option key={server.id} value={server.id}>{server.name}</option>
               ))}
             </select>
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-foreground-muted">
               <Filter size={14} />
             </div>
           </div>
@@ -87,10 +87,10 @@ export const Tools: React.FC = () => {
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-muted border-b border-border">
-                <th className="px-8 py-5 text-left text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">Tool Name</th>
-                <th className="px-8 py-5 text-left text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">Source Server</th>
-                <th className="px-8 py-5 text-left text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">Status</th>
-                <th className="px-8 py-5 text-right text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">Actions</th>
+                <th className="px-8 py-5 text-left text-xs font-black text-foreground-muted uppercase tracking-[0.2em]">Tool Name</th>
+                <th className="px-8 py-5 text-left text-xs font-black text-foreground-muted uppercase tracking-[0.2em]">Source Server</th>
+                <th className="px-8 py-5 text-left text-xs font-black text-foreground-muted uppercase tracking-[0.2em]">Status</th>
+                <th className="px-8 py-5 text-right text-xs font-black text-foreground-muted uppercase tracking-[0.2em]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -115,20 +115,20 @@ export const Tools: React.FC = () => {
                         <div className={`p-2.5 rounded-xl transition-colors ${
                           tool.enabled 
                             ? 'bg-primary/10 text-primary group-hover:bg-primary/20' 
-                            : 'bg-muted text-muted-foreground'
+                            : 'bg-muted text-foreground-muted'
                         }`}>
                           <Wrench size={20} />
                         </div>
                         <div className="flex flex-col">
                           <span className="font-bold text-foreground leading-none mb-1">{tool.toolName}</span>
-                          <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-tighter">ID: {tool.id.substring(0, 8)}</span>
+                          <span className="text-[10px] font-mono text-foreground-muted uppercase tracking-tighter">ID: {tool.id.substring(0, 8)}</span>
                         </div>
                       </div>
                     </td>
                     <td className="px-8 py-5">
-                      <div className="flex items-center gap-2.5 text-sm font-bold text-muted-foreground">
+                      <div className="flex items-center gap-2.5 text-sm font-bold text-foreground-muted">
                         <div className="p-1.5 bg-muted rounded-lg">
-                          <ServerIcon size={14} className="text-muted-foreground" />
+                          <ServerIcon size={14} className="text-foreground-muted" />
                         </div>
                         {serverMap.get(tool.serverId) || 'Unknown Server'}
                       </div>
@@ -144,7 +144,7 @@ export const Tools: React.FC = () => {
                           variant="ghost"
                           size="icon"
                           onClick={() => toggleTool(tool.id)}
-                          className={tool.enabled ? 'text-success hover:bg-success-soft' : 'text-muted-foreground hover:bg-muted'}
+                          className={tool.enabled ? 'text-success hover:bg-success-soft' : 'text-foreground-muted hover:bg-muted'}
                         >
                           <Power size={20} />
                         </Button>
@@ -160,7 +160,7 @@ export const Tools: React.FC = () => {
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between px-4 py-4 bg-surface border border-t-0 border-border rounded-b-2xl">
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-foreground-muted">
             Showing <span className="font-bold text-foreground">{(currentPage - 1) * PAGE_SIZE + 1}</span> to{' '}
             <span className="font-bold text-foreground">{Math.min(currentPage * PAGE_SIZE, filteredTools.length)}</span> of{' '}
             <span className="font-bold text-foreground">{filteredTools.length}</span> tools

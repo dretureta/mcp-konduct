@@ -12,12 +12,13 @@ const StatCard: React.FC<{
   title: string;
   value: string | number;
   icon: React.ElementType;
-  color: string;
+  iconBackgroundClassName: string;
+  iconClassName: string;
   trend?: string;
-}> = ({ title, value, icon: Icon, color, trend }) => (
+}> = ({ title, value, icon: Icon, iconBackgroundClassName, iconClassName, trend }) => (
   <Card hover className="p-6 flex items-start gap-4 group">
-    <div className={`rounded-2xl p-3 transition-transform group-hover:scale-110 ${color}`}>
-      <Icon size={24} className={color.replace('bg-', 'text-')} />
+    <div className={`rounded-2xl p-3 transition-transform group-hover:scale-110 ${iconBackgroundClassName}`}>
+      <Icon size={24} className={iconClassName} />
     </div>
     <div>
       <p className="mb-1 text-sm font-medium text-foreground-muted">{title}</p>
@@ -61,10 +62,34 @@ export const Dashboard: React.FC = () => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Active Servers" value={servers.filter(s => s.status === 'online').length} icon={Server} color="bg-primary/12" />
-        <StatCard title="Available Tools" value={tools.length} icon={Wrench} color="bg-accent/12" />
-        <StatCard title="Active Projects" value={projects.length} icon={Briefcase} color="bg-success-soft" />
-        <StatCard title="Enabled Tools" value={tools.filter(t => t.enabled).length} icon={CheckCircle2} color="bg-info-soft" />
+        <StatCard
+          title="Active Servers"
+          value={servers.filter(s => s.status === 'online').length}
+          icon={Server}
+          iconBackgroundClassName="bg-primary/12"
+          iconClassName="text-primary"
+        />
+        <StatCard
+          title="Available Tools"
+          value={tools.length}
+          icon={Wrench}
+          iconBackgroundClassName="bg-accent/12"
+          iconClassName="text-accent"
+        />
+        <StatCard
+          title="Active Projects"
+          value={projects.length}
+          icon={Briefcase}
+          iconBackgroundClassName="bg-success-soft"
+          iconClassName="text-success"
+        />
+        <StatCard
+          title="Enabled Tools"
+          value={tools.filter(t => t.enabled).length}
+          icon={CheckCircle2}
+          iconBackgroundClassName="bg-info-soft"
+          iconClassName="text-info"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

@@ -119,7 +119,7 @@ export const Settings: React.FC = () => {
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
       <div>
         <h1 className="text-4xl font-black text-foreground tracking-tight">Settings</h1>
-        <p className="text-muted-foreground font-medium">Manage backup, restore, and system preferences</p>
+        <p className="text-foreground-muted font-medium">Manage backup, restore, and system preferences</p>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -127,7 +127,7 @@ export const Settings: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold text-foreground">Backup & Restore</h2>
-              <p className="text-sm text-muted-foreground">Export or import your MCP configuration snapshot.</p>
+              <p className="text-sm text-foreground-muted">Export or import your MCP configuration snapshot.</p>
             </div>
             <Badge variant="primary" size="md">konduct-backup-v1</Badge>
           </div>
@@ -147,12 +147,12 @@ export const Settings: React.FC = () => {
               label="Import Backup File"
             />
             {fileName && (
-              <p className="text-xs text-muted-foreground">Selected file: {fileName}</p>
+              <p className="text-xs text-foreground-muted">Selected file: {fileName}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Import Mode</p>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-foreground-muted">Import Mode</p>
             <div className="flex gap-2">
               <Button
                 type="button"
@@ -240,13 +240,13 @@ export const Settings: React.FC = () => {
             <h2 className="text-xl font-bold text-foreground">Database</h2>
           </div>
           <div className="space-y-2">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Path</p>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-foreground-muted">Path</p>
             <p className="text-xs font-mono break-all text-foreground">
               {stats?.dbPath || 'Unavailable'}
             </p>
           </div>
           <div className="space-y-2">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Status</p>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-foreground-muted">Status</p>
             <Badge variant={stats?.dbPath ? 'success' : 'secondary'}>
               {stats?.dbPath ? 'Connected' : 'Unknown'}
             </Badge>

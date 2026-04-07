@@ -34,7 +34,7 @@ export const Logs: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-4xl font-black text-foreground tracking-tight">Request Logs</h1>
-          <p className="text-muted-foreground font-medium">Monitor real-time interactions across your MCP network</p>
+          <p className="text-foreground-muted font-medium">Monitor real-time interactions across your MCP network</p>
         </div>
         <div className="flex items-center gap-2">
           <Tooltip content="Refresh Logs">
@@ -45,7 +45,7 @@ export const Logs: React.FC = () => {
               disabled={isLoading}
               className="rounded-2xl h-12 w-12"
             >
-              <RefreshCcw size={20} className={isLoading ? 'animate-spin text-primary' : 'text-muted-foreground'} />
+              <RefreshCcw size={20} className={isLoading ? 'animate-spin text-primary' : 'text-foreground-muted'} />
             </Button>
           </Tooltip>
         </div>
@@ -54,7 +54,7 @@ export const Logs: React.FC = () => {
       <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex-1 flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
-              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground-muted" size={18} />
               <select
                 className="w-full bg-surface border-2 border-border focus:border-primary rounded-xl h-12 pl-12 pr-10 outline-none appearance-none transition-all text-sm font-bold text-foreground shadow-sm"
                 value={serverFilter}
@@ -96,12 +96,12 @@ export const Logs: React.FC = () => {
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-muted border-b border-border">
-                <th className="px-8 py-5 text-left text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">Timestamp</th>
-                <th className="px-8 py-5 text-left text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">Server</th>
-                <th className="px-8 py-5 text-left text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">Project</th>
-                <th className="px-8 py-5 text-left text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">Tool</th>
-                <th className="px-8 py-5 text-left text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">Duration</th>
-                <th className="px-8 py-5 text-right text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">Status</th>
+                <th className="px-8 py-5 text-left text-xs font-black text-foreground-muted uppercase tracking-[0.2em]">Timestamp</th>
+                <th className="px-8 py-5 text-left text-xs font-black text-foreground-muted uppercase tracking-[0.2em]">Server</th>
+                <th className="px-8 py-5 text-left text-xs font-black text-foreground-muted uppercase tracking-[0.2em]">Project</th>
+                <th className="px-8 py-5 text-left text-xs font-black text-foreground-muted uppercase tracking-[0.2em]">Tool</th>
+                <th className="px-8 py-5 text-left text-xs font-black text-foreground-muted uppercase tracking-[0.2em]">Duration</th>
+                <th className="px-8 py-5 text-right text-xs font-black text-foreground-muted uppercase tracking-[0.2em]">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border font-mono text-[13px]">
@@ -130,7 +130,7 @@ export const Logs: React.FC = () => {
                         <span className="font-bold text-foreground">
                           {parseLogTimestamp(log.timestamp).toLocaleTimeString()}
                         </span>
-                        <span className="text-[10px] text-muted-foreground opacity-60">
+                        <span className="text-[10px] text-foreground-muted opacity-60">
                           {parseLogTimestamp(log.timestamp).toLocaleDateString()}
                         </span>
                       </div>
@@ -146,7 +146,7 @@ export const Logs: React.FC = () => {
                           {log.project_name}
                         </Badge>
                       ) : (
-                        <span className="text-muted-foreground text-xs italic">unscoped</span>
+                        <span className="text-foreground-muted text-xs italic">unscoped</span>
                       )}
                     </td>
                     <td className="px-8 py-4">
@@ -155,7 +155,7 @@ export const Logs: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-8 py-4">
-                      <div className={`flex items-center gap-1.5 font-bold ${log.duration_ms > 1000 ? 'text-warning' : 'text-muted-foreground'}`}>
+                      <div className={`flex items-center gap-1.5 font-bold ${log.duration_ms > 1000 ? 'text-warning' : 'text-foreground-muted'}`}>
                         <Clock size={12} />
                         {log.duration_ms}ms
                       </div>
@@ -192,7 +192,7 @@ export const Logs: React.FC = () => {
 
       {/* Log Detail Modal */}
       {selectedLog && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-foreground/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <Card className="w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-border flex items-center justify-between bg-muted">
               <div className="flex items-center gap-3">
@@ -201,7 +201,7 @@ export const Logs: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-black text-xl text-foreground leading-tight">Log Details</h3>
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-0.5">ID: #{selectedLog.id}</p>
+                  <p className="text-xs font-bold text-foreground-muted uppercase tracking-widest mt-0.5">ID: #{selectedLog.id}</p>
                 </div>
               </div>
               <Button variant="secondary" size="icon" onClick={() => setSelectedLog(null)} className="rounded-xl">
@@ -212,35 +212,35 @@ export const Logs: React.FC = () => {
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 bg-muted rounded-2xl border border-border">
-                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] block mb-1">Server</span>
+                  <span className="text-[10px] font-black text-foreground-muted uppercase tracking-[0.2em] block mb-1">Server</span>
                   <span className="font-bold text-foreground">{serverMap.get(selectedLog.server_id) || selectedLog.server_id}</span>
                 </div>
                 {selectedLog.project_name && (
                   <div className="p-4 bg-muted rounded-2xl border border-border">
-                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] block mb-1">Project</span>
+                    <span className="text-[10px] font-black text-foreground-muted uppercase tracking-[0.2em] block mb-1">Project</span>
                     <span className="font-bold text-foreground">{selectedLog.project_name}</span>
                     {selectedLog.router_session_id && (
-                      <span className="text-xs text-muted-foreground block mt-1">Session: {selectedLog.router_session_id.substring(0, 8)}...</span>
+                      <span className="text-xs text-foreground-muted block mt-1">Session: {selectedLog.router_session_id.substring(0, 8)}...</span>
                     )}
                   </div>
                 )}
                 <div className="p-4 bg-muted rounded-2xl border border-border">
-                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] block mb-1">Tool</span>
+                  <span className="text-[10px] font-black text-foreground-muted uppercase tracking-[0.2em] block mb-1">Tool</span>
                   <span className="font-bold text-foreground">{selectedLog.tool_name}</span>
                 </div>
                 <div className="p-4 bg-muted rounded-2xl border border-border">
-                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] block mb-1">Duration</span>
+                  <span className="text-[10px] font-black text-foreground-muted uppercase tracking-[0.2em] block mb-1">Duration</span>
                   <span className="font-bold text-foreground">{selectedLog.duration_ms}ms</span>
                 </div>
                 <div className="p-4 bg-muted rounded-2xl border border-border">
-                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] block mb-1">Timestamp</span>
+                  <span className="text-[10px] font-black text-foreground-muted uppercase tracking-[0.2em] block mb-1">Timestamp</span>
                   <span className="font-bold text-foreground">{parseLogTimestamp(selectedLog.timestamp).toLocaleString()}</span>
                 </div>
               </div>
 
               {selectedLog.error_message && (
                 <div className="space-y-2">
-                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-1">Error Message</span>
+                  <span className="text-[10px] font-black text-foreground-muted uppercase tracking-[0.2em] ml-1">Error Message</span>
                   <div className="p-4 bg-error-soft rounded-2xl border border-error-border text-error font-mono text-sm">
                     {selectedLog.error_message}
                   </div>
@@ -248,7 +248,7 @@ export const Logs: React.FC = () => {
               )}
 
               <div className="space-y-2">
-                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-1">Payload Summary</span>
+                <span className="text-[10px] font-black text-foreground-muted uppercase tracking-[0.2em] ml-1">Payload Summary</span>
                 <div className="p-4 bg-foreground text-foreground-inverted rounded-2xl font-mono text-sm overflow-x-auto">
                   <pre>{JSON.stringify({
                     server_id: selectedLog.server_id,

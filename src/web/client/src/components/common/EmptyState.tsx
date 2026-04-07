@@ -30,13 +30,13 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       )}
     >
       {Icon && (
-        <div className="p-4 bg-surface-elevated rounded-2xl shadow-sm mb-6 text-muted-foreground">
+        <div className="p-4 bg-surface-elevated rounded-2xl shadow-sm mb-6 text-foreground-muted">
           <Icon size={40} />
         </div>
       )}
       <h3 className="text-xl font-bold text-foreground mb-2">{title}</h3>
       {description && (
-        <p className="text-muted-foreground max-w-sm mb-8 leading-relaxed">
+        <p className="text-foreground-muted max-w-sm mb-8 leading-relaxed">
           {description}
         </p>
       )}
