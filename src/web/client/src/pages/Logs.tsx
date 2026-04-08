@@ -9,9 +9,11 @@ import { EmptyState } from '../components/common/EmptyState.tsx';
 import { Tooltip } from '../components/common/Tooltip.tsx';
 import { LogEntry } from '../types';
 import { parseLogTimestamp } from '../utils/time';
+import { useI18n } from '../i18n';
 
 export const Logs: React.FC = () => {
   const { logs, servers, fetchLogs, isLoading } = useAppContext();
+  const { t } = useI18n();
   const [limit, setLimit] = useState(50);
   const [serverFilter, setServerFilter] = useState('');
   const [errorOnly, setErrorOnly] = useState(false);
@@ -33,11 +35,11 @@ export const Logs: React.FC = () => {
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black text-foreground tracking-tight">Request Logs</h1>
-          <p className="text-foreground-muted font-medium">Monitor real-time interactions across your MCP network</p>
+          <h1 className="text-4xl font-black text-foreground tracking-tight">{t('logs.requestLogs')}</h1>
+          <p className="text-foreground-muted font-medium">{t('logs.monitorRealtime')}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Tooltip content="Refresh Logs">
+          <Tooltip content={t('logs.refreshLogs')}>
             <Button
               variant="secondary"
               size="icon"
@@ -60,7 +62,7 @@ export const Logs: React.FC = () => {
                 value={serverFilter}
                 onChange={(e) => setServerFilter(e.target.value)}
               >
-                <option value="">All Servers</option>
+                <option value="">{t('logs.allServers')}</option>
                 {servers.map(server => (
                   <option key={server.id} value={server.id}>{server.name}</option>
                 ))}
@@ -86,7 +88,7 @@ export const Logs: React.FC = () => {
             className="w-full lg:w-auto h-12 rounded-xl"
           >
             <AlertCircle size={18} />
-            {errorOnly ? 'Showing Errors Only' : 'Show All Logs'}
+            {errorOnly ? t('logs.showErrorsOnly') : t('logs.showAllLogs')}
           </Button>
         </div>
       </div>
@@ -96,12 +98,12 @@ export const Logs: React.FC = () => {
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-muted border-b border-border">
-                <th className="px-8 py-5 text-left text-xs font-black text-foreground-muted uppercase tracking-[0.2em]">Timestamp</th>
-                <th className="px-8 py-5 text-left text-xs font-black text-foreground-muted uppercase tracking-[0.2em]">Server</th>
-                <th className="px-8 py-5 text-left text-xs font-black text-foreground-muted uppercase tracking-[0.2em]">Project</th>
-                <th className="px-8 py-5 text-left text-xs font-black text-foreground-muted uppercase tracking-[0.2em]">Tool</th>
-                <th className="px-8 py-5 text-left text-xs font-black text-foreground-muted uppercase tracking-[0.2em]">Duration</th>
-                <th className="px-8 py-5 text-right text-xs font-black text-foreground-muted uppercase tracking-[0.2em]">Status</th>
+                <th className="px-8 py-5 text-left text-xs font-black text-foreground-muted uppercase tracking-[0.2em]">{t('logs.timestamp')}</th>
+                <th className="px-8 py-5 text-left text-xs font-black text-foreground-muted uppercase tracking-[0.2em]">{t('logs.server')}</th>
+                <th className="px-8 py-5 text-left text-xs font-black text-foreground-muted uppercase tracking-[0.2em]">{t('logs.project')}</th>
+                <th className="px-8 py-5 text-left text-xs font-black text-foreground-muted uppercase tracking-[0.2em]">{t('logs.tool')}</th>
+                <th className="px-8 py-5 text-left text-xs font-black text-foreground-muted uppercase tracking-[0.2em]">{t('logs.duration')}</th>
+                <th className="px-8 py-5 text-right text-xs font-black text-foreground-muted uppercase tracking-[0.2em]">{t('logs.status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border font-mono text-[13px]">
@@ -110,10 +112,10 @@ export const Logs: React.FC = () => {
                   <td colSpan={6} className="px-8 py-20">
                     <EmptyState 
                       icon={Clock}
-                      title="No activity recorded"
+                      title={t('logs.noActivityRecorded')}
                       description={serverFilter || errorOnly 
-                        ? "No logs match your current filter settings. Try relaxing your search criteria."
-                        : "Waiting for request logs... Run some tools to see activity here."}
+                        ? t('logs.noLogsMatchFilter')
+                        : t('logs.waitingForLogs')}
                       className="border-none bg-transparent p-0"
                     />
                   </td>
@@ -164,11 +166,11 @@ export const Logs: React.FC = () => {
                       <div className="flex items-center justify-end gap-2">
                         {Number(log.success) === 1 ? (
                           <Badge variant="success" size="md">
-                            Success <CheckCircle2 size={12} className="ml-1.5" />
+                            {t('servers.success')} <CheckCircle2 size={12} className="ml-1.5" />
                           </Badge>
                         ) : (
                           <Badge variant="danger" size="md">
-                            Error <AlertCircle size={12} className="ml-1.5" />
+                            {t('servers.error')} <AlertCircle size={12} className="ml-1.5" />
                           </Badge>
                         )}
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity ml-2">
@@ -186,7 +188,7 @@ export const Logs: React.FC = () => {
       
       {isLoading && logs.length > 0 && (
         <div className="flex justify-center pt-4">
-          <Loading size="sm" label="Updating logs..." className="flex-row" />
+          <Loading size="sm" label={t('logs.updatingLogs')} className="flex-row" />
         </div>
       )}
 
@@ -200,7 +202,7 @@ export const Logs: React.FC = () => {
                   {Number(selectedLog.success) === 1 ? <CheckCircle2 size={24} /> : <AlertCircle size={24} />}
                 </div>
                 <div>
-                  <h3 className="font-black text-xl text-foreground leading-tight">Log Details</h3>
+                  <h3 className="font-black text-xl text-foreground leading-tight">{t('logs.logDetails')}</h3>
                   <p className="text-xs font-bold text-foreground-muted uppercase tracking-widest mt-0.5">ID: #{selectedLog.id}</p>
                 </div>
               </div>
@@ -212,12 +214,12 @@ export const Logs: React.FC = () => {
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 bg-muted rounded-2xl border border-border">
-                  <span className="text-[10px] font-black text-foreground-muted uppercase tracking-[0.2em] block mb-1">Server</span>
+                  <span className="text-[10px] font-black text-foreground-muted uppercase tracking-[0.2em] block mb-1">{t('logs.server')}</span>
                   <span className="font-bold text-foreground">{serverMap.get(selectedLog.server_id) || selectedLog.server_id}</span>
                 </div>
                 {selectedLog.project_name && (
                   <div className="p-4 bg-muted rounded-2xl border border-border">
-                    <span className="text-[10px] font-black text-foreground-muted uppercase tracking-[0.2em] block mb-1">Project</span>
+                    <span className="text-[10px] font-black text-foreground-muted uppercase tracking-[0.2em] block mb-1">{t('logs.project')}</span>
                     <span className="font-bold text-foreground">{selectedLog.project_name}</span>
                     {selectedLog.router_session_id && (
                       <span className="text-xs text-foreground-muted block mt-1">Session: {selectedLog.router_session_id.substring(0, 8)}...</span>
@@ -225,22 +227,22 @@ export const Logs: React.FC = () => {
                   </div>
                 )}
                 <div className="p-4 bg-muted rounded-2xl border border-border">
-                  <span className="text-[10px] font-black text-foreground-muted uppercase tracking-[0.2em] block mb-1">Tool</span>
+                  <span className="text-[10px] font-black text-foreground-muted uppercase tracking-[0.2em] block mb-1">{t('logs.tool')}</span>
                   <span className="font-bold text-foreground">{selectedLog.tool_name}</span>
                 </div>
                 <div className="p-4 bg-muted rounded-2xl border border-border">
-                  <span className="text-[10px] font-black text-foreground-muted uppercase tracking-[0.2em] block mb-1">Duration</span>
+                  <span className="text-[10px] font-black text-foreground-muted uppercase tracking-[0.2em] block mb-1">{t('logs.duration')}</span>
                   <span className="font-bold text-foreground">{selectedLog.duration_ms}ms</span>
                 </div>
                 <div className="p-4 bg-muted rounded-2xl border border-border">
-                  <span className="text-[10px] font-black text-foreground-muted uppercase tracking-[0.2em] block mb-1">Timestamp</span>
+                  <span className="text-[10px] font-black text-foreground-muted uppercase tracking-[0.2em] block mb-1">{t('logs.timestamp')}</span>
                   <span className="font-bold text-foreground">{parseLogTimestamp(selectedLog.timestamp).toLocaleString()}</span>
                 </div>
               </div>
 
               {selectedLog.error_message && (
                 <div className="space-y-2">
-                  <span className="text-[10px] font-black text-foreground-muted uppercase tracking-[0.2em] ml-1">Error Message</span>
+                  <span className="text-[10px] font-black text-foreground-muted uppercase tracking-[0.2em] ml-1">{t('servers.error')} Message</span>
                   <div className="p-4 bg-error-soft rounded-2xl border border-error-border text-error font-mono text-sm">
                     {selectedLog.error_message}
                   </div>
@@ -264,7 +266,7 @@ export const Logs: React.FC = () => {
 
             <div className="p-6 bg-muted border-t border-border flex justify-end">
               <Button variant="primary" onClick={() => setSelectedLog(null)} className="rounded-xl px-8">
-                Close
+                {t('common.close')}
               </Button>
             </div>
           </Card>

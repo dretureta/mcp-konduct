@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useDarkMode } from '../hooks/useDarkMode';
+import { useI18n } from '../i18n';
 import { Server, Tool, DashboardStats, CreateServerRequest, UpdateServerRequest, Project, LogEntry } from '../types';
 import { serverApi, statsApi, toolApi, projectApi, logApi } from '../utils/api';
 import { ToastMessage, ToastType } from '../components/common/Toast';
@@ -37,6 +38,32 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+// Toast message keys for different operations
+const TOAST_KEYS = {
+  serverAdded: 'toast.serverAdded',
+  serverUpdated: 'toast.serverUpdated',
+  serverDeleted: 'toast.serverDeleted',
+  serverEnabled: 'toast.serverEnabled',
+  serverDisabled: 'toast.serverDisabled',
+  serverStarted: 'toast.serverStarted',
+  serverStopped: 'toast.serverStopped',
+  toolEnabled: 'toast.toolEnabled',
+  toolDisabled: 'toast.toolDisabled',
+  projectCreated: 'toast.projectCreated',
+  projectUpdated: 'toast.projectUpdated',
+  projectDeleted: 'toast.projectDeleted',
+  error: 'toast.error',
+  failedToAddServer: 'toast.failedToAddServer',
+  failedToUpdateServer: 'toast.failedToUpdateServer',
+  failedToToggleServer: 'toast.failedToToggleServer',
+  failedToDeleteServer: 'toast.failedToDeleteServer',
+  failedToDiscoverTools: 'toast.failedToDiscoverTools',
+  failedToToggleTool: 'toast.failedToToggleTool',
+  failedToCreateProject: 'toast.failedToCreateProject',
+  failedToUpdateProject: 'toast.failedToUpdateProject',
+  failedToDeleteProject: 'toast.failedToDeleteProject',
+};
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isDark, toggle } = useDarkMode();
   const [servers, setServers] = useState<Server[]>([]);
@@ -49,6 +76,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [searchQuery, setSearchQuery] = useState('');
   const [discoveringServerId, setDiscoveringServerId] = useState<string | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  // i18n translation function
+  const { t: translate } = useI18n();
 
   const filteredServers = servers.filter(s => 
     s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -111,11 +141,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       await serverApi.createServer(data);
       await refreshData();
-      addToast('success', 'Server added successfully');
+      addToast('success', translate(TOAST_KEYS.serverAdded));
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to add server';
       setError(msg);
-      addToast('error', msg);
+      addToast('error', translate(TOAST_KEYS.failedToAddServer));
       throw err;
     }
   };
@@ -124,11 +154,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       await serverApi.updateServer(id, data);
       await refreshData();
-      addToast('success', 'Server updated successfully');
+      addToast('success', translate(TOAST_KEYS.serverUpdated));
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to update server';
       setError(msg);
-      addToast('error', msg);
+      addToast('error', translate(TOAST_KEYS.failedToUpdateServer));
       throw err;
     }
   };
@@ -137,10 +167,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       await serverApi.toggleServer(id);
       await refreshData();
+      // Determine if server is now enabled or disabled after toggle
+      const server = servers.find(s => s.id === id);
+      if (server) {
+        addToast('success', translate(server.enabled ? TOAST_KEYS.serverDisabled : TOAST_KEYS.serverEnabled));
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to toggle server';
       setError(msg);
-      addToast('error', msg);
+      addToast('error', translate(TOAST_KEYS.failedToToggleServer));
     }
   };
 
@@ -148,10 +183,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       await serverApi.deleteServer(id);
       await refreshData();
+      addToast('success', translate(TOAST_KEYS.serverDeleted));
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to delete server';
       setError(msg);
-      addToast('error', msg);
+      addToast('error', translate(TOAST_KEYS.failedToDeleteServer));
     }
   };
 
@@ -163,7 +199,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to discover tools';
       setError(msg);
-      addToast('error', msg);
+      addToast('error', translate(TOAST_KEYS.failedToDiscoverTools));
     } finally {
       setDiscoveringServerId(null);
     }
@@ -173,10 +209,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       await toolApi.toggleTool(id);
       await refreshData();
+      // Determine if tool is now enabled or disabled after toggle
+      const tool = tools.find(t => t.id === id);
+      if (tool) {
+        addToast('success', translate(tool.enabled ? TOAST_KEYS.toolDisabled : TOAST_KEYS.toolEnabled));
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to toggle tool';
       setError(msg);
-      addToast('error', msg);
+      addToast('error', translate(TOAST_KEYS.failedToToggleTool));
     }
   };
 
@@ -184,10 +225,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       await projectApi.createProject(name, description);
       await refreshData();
+      addToast('success', translate(TOAST_KEYS.projectCreated));
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to create project';
       setError(msg);
-      addToast('error', msg);
+      addToast('error', translate(TOAST_KEYS.failedToCreateProject));
       throw err;
     }
   };
@@ -196,11 +238,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       await projectApi.updateProject(id, { name, description });
       await refreshData();
-      addToast('success', 'Project updated successfully');
+      addToast('success', translate(TOAST_KEYS.projectUpdated));
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to update project';
       setError(msg);
-      addToast('error', msg);
+      addToast('error', translate(TOAST_KEYS.failedToUpdateProject));
       throw err;
     }
   };
@@ -209,10 +251,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       await projectApi.deleteProject(id);
       await refreshData();
+      addToast('success', translate(TOAST_KEYS.projectDeleted));
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to delete project';
       setError(msg);
-      addToast('error', msg);
+      addToast('error', translate(TOAST_KEYS.failedToDeleteProject));
     }
   };
 

@@ -11,9 +11,11 @@ import { EmptyState } from '../components/common/EmptyState.tsx';
 import { Tooltip } from '../components/common/Tooltip.tsx';
 import { projectApi } from '../utils/api';
 import { Project, ProjectFullResponse, Server } from '../types';
+import { useI18n } from '../i18n';
 
 export const Projects: React.FC = () => {
   const { projects, servers, isLoading, createProject, updateProject, deleteProject, refreshData } = useAppContext();
+  const { t } = useI18n();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
@@ -46,7 +48,7 @@ export const Projects: React.FC = () => {
   };
 
   if (isLoading && projects.length === 0) {
-    return <Loading label="Syncing projects..." />;
+    return <Loading label={t('projects.syncingProjects')} />;
   }
 
   const openManageModal = async (project: Project) => {
@@ -160,40 +162,40 @@ export const Projects: React.FC = () => {
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black text-foreground tracking-tight">Projects</h1>
-          <p className="text-foreground-muted font-medium">Group your servers into logical projects</p>
+          <h1 className="text-4xl font-black text-foreground tracking-tight">{t('projects.title')}</h1>
+          <p className="text-foreground-muted font-medium">{t('projects.groupServers')}</p>
         </div>
         <Button
           onClick={() => setIsModalOpen(true)}
           className="w-full md:w-auto"
         >
           <Plus size={20} />
-          <span>New Project</span>
+          <span>{t('projects.newProject')}</span>
         </Button>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Create New Project">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={t('projects.createNew')}>
         <form onSubmit={handleSubmit} className="space-y-6">
           <Input
-            label="Project Name"
+            label={t('projects.projectName')}
             required
             autoFocus
             placeholder="e.g., Marketing AI, Dev Environment"
             value={newProjectName}
             onChange={(e) => setNewProjectName(e.target.value)}
-            helperText="A clear, concise name for your collection of servers."
+            helperText={t('projects.descriptionHelp')}
           />
           <div className="space-y-2">
-            <label className="text-sm font-bold text-foreground">Description</label>
+            <label className="text-sm font-bold text-foreground">{t('projects.description')}</label>
             <textarea
               className="w-full bg-muted border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all"
-              placeholder="What is this project for?"
+              placeholder={t('projects.descriptionPlaceholder')}
               rows={3}
               value={newProjectDescription}
               onChange={(e) => setNewProjectDescription(e.target.value)}
             />
             <p className="text-xs text-foreground-muted">
-              Optional context shown on project cards to help explain the collection.
+              {t('projects.descriptionHelp')}
             </p>
           </div>
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
@@ -202,14 +204,14 @@ export const Projects: React.FC = () => {
               variant="secondary"
               onClick={() => setIsModalOpen(false)}
             >
-              Cancel
+              {t('projects.cancel')}
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting || !newProjectName.trim()}
               isLoading={isSubmitting}
             >
-              Create Project
+              {t('projects.createProject')}
             </Button>
           </div>
         </form>
@@ -218,17 +220,17 @@ export const Projects: React.FC = () => {
       <Modal
         isOpen={isManageModalOpen}
         onClose={closeManageModal}
-        title={managingProject ? `Manage Servers - ${managingProject.name}` : 'Manage Servers'}
+        title={managingProject ? `${t('projects.manageServersTitle')} ${managingProject.name}` : t('projects.manageServers')}
       >
         {isManageLoading ? (
-          <Loading label="Loading project servers..." className="py-10" />
+          <Loading label={t('projects.loadingProjectScope')} className="py-10" />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="space-y-3">
-              <h4 className="text-sm font-black uppercase tracking-wider text-foreground-muted">Connected Servers</h4>
+              <h4 className="text-sm font-black uppercase tracking-wider text-foreground-muted">{t('projects.connectedServers')}</h4>
               {projectServers.length === 0 ? (
                 <p className="text-sm text-foreground-muted p-4 rounded-xl bg-muted">
-                  No servers linked yet.
+                  {t('projects.noServersLinked')}
                 </p>
               ) : (
                 <div className="space-y-2">
@@ -246,7 +248,7 @@ export const Projects: React.FC = () => {
                         className="text-error hover:text-error"
                       >
                         <Unlink2 size={14} />
-                        Remove
+                        {t('projects.remove')}
                       </Button>
                     </div>
                   ))}
@@ -255,10 +257,10 @@ export const Projects: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              <h4 className="text-sm font-black uppercase tracking-wider text-foreground-muted">Available Servers</h4>
+              <h4 className="text-sm font-black uppercase tracking-wider text-foreground-muted">{t('projects.availableServers')}</h4>
               {availableServers.length === 0 ? (
                 <p className="text-sm text-foreground-muted p-4 rounded-xl bg-muted">
-                  All servers are already connected.
+                  {t('projects.allServersConnected')}
                 </p>
               ) : (
                 <div className="space-y-2">
@@ -276,7 +278,7 @@ export const Projects: React.FC = () => {
                         className="text-success hover:text-success"
                       >
                         <Link2 size={14} />
-                        Add
+                        {t('projects.add')}
                       </Button>
                     </div>
                   ))}
@@ -287,10 +289,10 @@ export const Projects: React.FC = () => {
         )}
       </Modal>
 
-      <Modal isOpen={!!editingProject} onClose={closeEditModal} title={editingProject ? `Edit ${editingProject.name}` : 'Edit Project'}>
+      <Modal isOpen={!!editingProject} onClose={closeEditModal} title={editingProject ? `${t('projects.edit')} ${editingProject.name}` : t('projects.editProject')}>
         <form onSubmit={handleEditSubmit} className="space-y-6">
           <Input
-            label="Project Name"
+            label={t('projects.projectName')}
             required
             autoFocus
             placeholder="e.g., Marketing AI, Dev Environment"
@@ -299,24 +301,24 @@ export const Projects: React.FC = () => {
             helperText="Update the display name for this project."
           />
           <div className="space-y-2">
-            <label className="text-sm font-bold text-foreground">Description</label>
+            <label className="text-sm font-bold text-foreground">{t('projects.description')}</label>
             <textarea
               className="w-full bg-muted border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all"
-              placeholder="What is this project for?"
+              placeholder={t('projects.descriptionPlaceholder')}
               rows={3}
               value={editProjectDescription}
               onChange={(e) => setEditProjectDescription(e.target.value)}
             />
             <p className="text-xs text-foreground-muted">
-              Optional context shown on project cards to explain the collection.
+              {t('projects.descriptionHelp')}
             </p>
           </div>
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
             <Button type="button" variant="secondary" onClick={closeEditModal}>
-              Cancel
+              {t('projects.cancel')}
             </Button>
             <Button type="submit" disabled={isEditSubmitting || !editProjectName.trim()} isLoading={isEditSubmitting}>
-              Update Project
+              {t('projects.createProject')}
             </Button>
           </div>
         </form>
@@ -325,12 +327,12 @@ export const Projects: React.FC = () => {
       {projects.length === 0 ? (
         <EmptyState 
           icon={Briefcase}
-          title="No projects found"
-          description="Projects allow you to organize and manage groups of MCP servers together. Create your first project to get started."
+          title={t('projects.noProjectsFound')}
+          description={t('projects.projectsDescription')}
           action={
             <Button onClick={() => setIsModalOpen(true)}>
               <Plus size={20} />
-              Create Your First Project
+              {t('projects.createFirst')}
             </Button>
           }
         />
@@ -344,7 +346,7 @@ export const Projects: React.FC = () => {
                     <Folder size={24} />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Tooltip content="Edit Details">
+                    <Tooltip content={t('projects.edit')}>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -355,12 +357,12 @@ export const Projects: React.FC = () => {
                         <Pencil size={18} />
                       </Button>
                     </Tooltip>
-                    <Tooltip content="Delete Project">
+                    <Tooltip content={t('projects.deleteProject')}>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => {
-                          if (window.confirm('Delete this project? This will not delete the connected servers.')) {
+                          if (window.confirm(t('projects.deleteConfirm'))) {
                             deleteProject(project.id);
                           }
                         }}
@@ -374,7 +376,7 @@ export const Projects: React.FC = () => {
                 <div>
                   <h3 className="text-xl font-bold text-foreground mb-2">{project.name}</h3>
                   <p className="text-sm text-foreground-muted leading-relaxed">
-                    {project.description || 'No description provided for this project.'}
+                    {project.description || t('projects.noDescription')}
                   </p>
                 </div>
                 <Button
@@ -387,20 +389,20 @@ export const Projects: React.FC = () => {
                     size={14}
                     className={expandedProjectId === project.id ? 'rotate-180 transition-transform' : 'transition-transform'}
                   />
-                  {expandedProjectId === project.id ? 'Hide project scope' : 'Show project scope'}
+                  {expandedProjectId === project.id ? t('projects.hideProjectScope') : t('projects.showProjectScope')}
                 </Button>
                 {expandedProjectId === project.id && (
                   <div className="space-y-4 rounded-xl border border-border p-4 bg-muted">
                     {loadingProjectDetails === project.id ? (
-                      <Loading label="Loading project scope..." className="py-4" />
+                      <Loading label={t('projects.loadingProjectScope')} className="py-4" />
                     ) : projectDetails[project.id] ? (
                       <>
                         <div>
                           <p className="text-xs font-black uppercase tracking-wider text-foreground-muted mb-2">
-                            Servers ({projectDetails[project.id].summary.serverCount})
+                            {t('projects.servers')} ({projectDetails[project.id].summary.serverCount})
                           </p>
                           {projectDetails[project.id].servers.length === 0 ? (
-                            <p className="text-xs text-foreground-muted">No linked servers</p>
+                            <p className="text-xs text-foreground-muted">{t('projects.noLinkedServers')}</p>
                           ) : (
                             <div className="flex flex-wrap gap-2">
                               {projectDetails[project.id].servers.map((server) => (
@@ -413,10 +415,10 @@ export const Projects: React.FC = () => {
                         </div>
                         <div>
                           <p className="text-xs font-black uppercase tracking-wider text-foreground-muted mb-2">
-                            Tools ({projectDetails[project.id].summary.toolCount})
+                            {t('projects.tools')} ({projectDetails[project.id].summary.toolCount})
                           </p>
                           {projectDetails[project.id].tools.length === 0 ? (
-                            <p className="text-xs text-foreground-muted">No discovered tools in this scope</p>
+                            <p className="text-xs text-foreground-muted">{t('projects.noDiscoveredTools')}</p>
                           ) : (
                             <div className="max-h-28 overflow-y-auto rounded-lg border border-border bg-surface px-2 py-1">
                               {projectDetails[project.id].tools.map((tool) => (
@@ -429,7 +431,7 @@ export const Projects: React.FC = () => {
                         </div>
                         <div>
                           <p className="text-xs font-black uppercase tracking-wider text-foreground-muted mb-2">
-                            MCP command
+                            {t('projects.mcpCommand')}
                           </p>
                           <div className="rounded-lg bg-foreground text-foreground-inverted text-[11px] font-mono px-3 py-2 break-all">
                             {projectDetails[project.id].config.command}
@@ -441,7 +443,7 @@ export const Projects: React.FC = () => {
                             className="mt-2 text-foreground-muted hover:text-primary"
                           >
                             <Copy size={13} />
-                            Copy command
+                            {t('projects.copyCommand')}
                           </Button>
                         </div>
                       </>
@@ -451,7 +453,7 @@ export const Projects: React.FC = () => {
               </div>
               <div className="px-6 py-4 bg-muted border-t border-border flex items-center justify-between rounded-b-2xl">
                 <Badge variant="secondary" size="md">
-                  {project.serverCount || 0} Servers
+                  {project.serverCount || 0} {t('projects.serversCount')}
                 </Badge>
                 <Button
                   variant="ghost"
@@ -459,7 +461,7 @@ export const Projects: React.FC = () => {
                   className="text-primary font-bold hover:gap-2 transition-all"
                   onClick={() => openManageModal(project)}
                 >
-                  Manage <ExternalLink size={14} className="ml-1" />
+                  {t('projects.manage')} <ExternalLink size={14} className="ml-1" />
                 </Button>
               </div>
             </Card>

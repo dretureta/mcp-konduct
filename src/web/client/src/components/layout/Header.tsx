@@ -1,7 +1,8 @@
 import React from 'react';
-import { Sun, Moon, Plus, Bell, Search } from 'lucide-react';
+import { Sun, Moon, Plus, Bell, Search, Globe } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
+import { useI18n } from '../../i18n';
 
 export const Header: React.FC = () => {
   const {
@@ -14,6 +15,7 @@ export const Header: React.FC = () => {
     filteredTools,
     fetchLogs,
   } = useAppContext();
+  const { t, locale, setLocale } = useI18n();
   const navigate = useNavigate();
 
   const errorCount = logs.filter(l => Number(l.success) === 0).length;
@@ -62,6 +64,10 @@ export const Header: React.FC = () => {
     navigate('/logs');
   };
 
+  const toggleLocale = () => {
+    setLocale(locale === 'es' ? 'en' : 'es');
+  };
+
   return (
     <header className="sticky top-0 z-40 flex h-20 items-center justify-between border-b border-border bg-surface/90 px-8 backdrop-blur-md">
       <div className="flex items-center gap-4 flex-1">
@@ -72,14 +78,14 @@ export const Header: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleSearchEnter}
-            placeholder="Search servers, tools..."
+            placeholder={t('header.search')}
             className="w-full rounded-xl border border-transparent bg-background-subtle py-2 pl-10 pr-4 text-sm text-foreground shadow-soft outline-none transition-all focus:border-primary/40 focus:ring-4 focus:ring-ring"
           />
 
           {showSearchResults && (
             <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 space-y-2 rounded-2xl border border-border bg-surface p-2 shadow-medium">
               <div className="px-2 pt-1">
-                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground-muted">Servers</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground-muted">{t('header.searchServers')}</p>
               </div>
               {topServerResults.length > 0 ? (
                 topServerResults.map((server) => (
@@ -94,11 +100,11 @@ export const Header: React.FC = () => {
                   </button>
                 ))
               ) : (
-                <p className="px-3 py-2 text-xs text-foreground-muted">No servers match</p>
+                <p className="px-3 py-2 text-xs text-foreground-muted">{t('header.noServersMatch')}</p>
               )}
 
               <div className="px-2 pt-1">
-                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground-muted">Tools</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground-muted">{t('header.searchTools')}</p>
               </div>
               {topToolResults.length > 0 ? (
                 topToolResults.map((tool) => (
@@ -113,7 +119,7 @@ export const Header: React.FC = () => {
                   </button>
                 ))
               ) : (
-                <p className="px-3 py-2 text-xs text-foreground-muted">No tools match</p>
+                <p className="px-3 py-2 text-xs text-foreground-muted">{t('header.noToolsMatch')}</p>
               )}
             </div>
           )}
@@ -121,6 +127,16 @@ export const Header: React.FC = () => {
       </div>
 
       <div className="flex items-center gap-4">
+        {/* Language Toggle */}
+        <button
+          onClick={toggleLocale}
+          className="rounded-xl border border-transparent p-2.5 text-foreground-muted transition-all active:scale-95 hover:border-border hover:bg-background-subtle"
+          aria-label={t('header.language')}
+          title={t('header.language')}
+        >
+          <Globe size={20} />
+        </button>
+
         {/* Dark Mode Toggle */}
         <button
           onClick={toggleDarkMode}
@@ -152,7 +168,7 @@ export const Header: React.FC = () => {
           className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-soft transition-all active:scale-95 hover:bg-primary-dark hover:shadow-glow"
         >
           <Plus size={18} />
-          <span>Add Server</span>
+          <span>{t('servers.addServer')}</span>
         </button>
 
         {/* Local mode: no user profile needed */}

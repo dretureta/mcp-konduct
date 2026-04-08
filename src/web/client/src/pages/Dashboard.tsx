@@ -7,6 +7,7 @@ import { Badge } from '../components/common/Badge.tsx';
 import { Button } from '../components/common/Button.tsx';
 import { Loading } from '../components/common/Loading.tsx';
 import { parseLogTimestamp } from '../utils/time';
+import { useI18n } from '../i18n';
 
 const StatCard: React.FC<{
   title: string;
@@ -35,6 +36,7 @@ const StatCard: React.FC<{
 
 export const Dashboard: React.FC = () => {
   const { servers, tools, isLoading, logs, fetchLogs, projects } = useAppContext();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const serverMap = new Map(servers.map((server) => [server.id, server.name]));
 
@@ -45,7 +47,7 @@ export const Dashboard: React.FC = () => {
   const recentLogs = logs.slice(0, 5);
 
   if (isLoading) {
-    return <Loading label="Syncing system status..." />;
+    return <Loading label={t('dashboard.syncingStatus')} />;
   }
 
   return (
@@ -53,38 +55,38 @@ export const Dashboard: React.FC = () => {
       {/* Welcome Section */}
       <section>
         <h1 className="mb-2 text-4xl font-black tracking-tight text-foreground">
-          System Overview
+          {t('dashboard.systemOverview')}
         </h1>
         <p className="font-medium text-foreground-muted">
-          Welcome back. Here's what's happening across your MCP network today.
+          {t('dashboard.welcomeBack')}
         </p>
       </section>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
-          title="Active Servers"
+          title={t('dashboard.activeServersStat')}
           value={servers.filter(s => s.status === 'online').length}
           icon={Server}
           iconBackgroundClassName="bg-primary/12"
           iconClassName="text-primary"
         />
         <StatCard
-          title="Available Tools"
+          title={t('dashboard.availableTools')}
           value={tools.length}
           icon={Wrench}
           iconBackgroundClassName="bg-accent/12"
           iconClassName="text-accent"
         />
         <StatCard
-          title="Active Projects"
+          title={t('dashboard.activeProjects')}
           value={projects.length}
           icon={Briefcase}
           iconBackgroundClassName="bg-success-soft"
           iconClassName="text-success"
         />
         <StatCard
-          title="Enabled Tools"
+          title={t('dashboard.enabledTools')}
           value={tools.filter(t => t.enabled).length}
           icon={CheckCircle2}
           iconBackgroundClassName="bg-info-soft"
@@ -98,7 +100,7 @@ export const Dashboard: React.FC = () => {
           <div className="flex items-center justify-between">
             <h2 className="flex items-center gap-3 text-2xl font-bold text-foreground">
               <Server size={24} className="text-primary" />
-              Connected Servers
+              {t('dashboard.connectedServers')}
             </h2>
             <Button
               variant="ghost"
@@ -106,7 +108,7 @@ export const Dashboard: React.FC = () => {
               className="text-primary hover:text-primary-dark"
               onClick={() => navigate('/servers')}
             >
-              View All
+              {t('dashboard.viewAll')}
             </Button>
           </div>
           
@@ -139,7 +141,7 @@ export const Dashboard: React.FC = () => {
         <div className="space-y-6">
           <h2 className="flex items-center gap-3 text-2xl font-bold text-foreground">
             <Activity size={24} className="text-accent" />
-            Recent Activity
+            {t('dashboard.recentActivityCard')}
           </h2>
           <Card className="overflow-hidden">
             <div className="p-6 space-y-6">
@@ -168,7 +170,7 @@ export const Dashboard: React.FC = () => {
                 })
               ) : (
                 <div className="py-8 text-center text-sm text-foreground-muted">
-                  No recent activity found.
+                  {t('dashboard.noRecentActivity')}
                 </div>
               )}
             </div>
@@ -176,7 +178,7 @@ export const Dashboard: React.FC = () => {
               onClick={() => navigate('/logs')}
               className="w-full border-t border-border bg-background-subtle py-4 text-sm font-bold text-foreground-muted transition-colors hover:text-primary"
             >
-              View Audit Log
+              {t('dashboard.viewAuditLog')}
             </button>
           </Card>
         </div>

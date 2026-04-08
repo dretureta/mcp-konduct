@@ -7,6 +7,7 @@ import { Badge } from '../components/common/Badge.tsx';
 import { Input } from '../components/common/Input.tsx';
 import { settingsApi } from '../utils/api';
 import { BackupPayload, ImportResponse } from '../types';
+import { useI18n } from '../i18n';
 
 type ImportMode = 'merge' | 'replace';
 
@@ -23,6 +24,7 @@ const downloadJson = (filename: string, data: unknown): void => {
 
 export const Settings: React.FC = () => {
   const { stats, refreshData } = useAppContext();
+  const { t, locale, setLocale } = useI18n();
   const [mode, setMode] = useState<ImportMode>('merge');
   const [fileContent, setFileContent] = useState('');
   const [fileName, setFileName] = useState('');
@@ -118,24 +120,53 @@ export const Settings: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
       <div>
-        <h1 className="text-4xl font-black text-foreground tracking-tight">Settings</h1>
-        <p className="text-foreground-muted font-medium">Manage backup, restore, and system preferences</p>
+        <h1 className="text-4xl font-black text-foreground tracking-tight">{t('settings.title')}</h1>
+        <p className="text-foreground-muted font-medium">{t('settings.manageBackup')}</p>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <Card className="xl:col-span-2 p-6 space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">Backup & Restore</h2>
-              <p className="text-sm text-foreground-muted">Export or import your MCP configuration snapshot.</p>
+              <h2 className="text-2xl font-bold text-foreground">{t('settings.backupRestore')}</h2>
+              <p className="text-sm text-foreground-muted">{t('settings.exportImport')}</p>
             </div>
             <Badge variant="primary" size="md">konduct-backup-v1</Badge>
+          </div>
+
+          {/* Language Setting */}
+          <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-muted">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                <Database size={20} />
+              </div>
+              <div>
+                <p className="font-bold text-foreground">{t('settings.language')}</p>
+                <p className="text-xs text-foreground-muted">{locale === 'es' ? 'Español' : 'English'}</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant={locale === 'es' ? 'primary' : 'secondary'}
+                size="sm"
+                onClick={() => setLocale('es')}
+              >
+                ES
+              </Button>
+              <Button
+                variant={locale === 'en' ? 'primary' : 'secondary'}
+                size="sm"
+                onClick={() => setLocale('en')}
+              >
+                EN
+              </Button>
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <Button onClick={handleExport} isLoading={isExporting}>
               <Download size={18} />
-              Export Configuration
+              {t('settings.exportConfig')}
             </Button>
           </div>
 
@@ -144,35 +175,35 @@ export const Settings: React.FC = () => {
               type="file"
               accept="application/json"
               onChange={handleFileSelection}
-              label="Import Backup File"
+              label={t('settings.importBackup')}
             />
             {fileName && (
-              <p className="text-xs text-foreground-muted">Selected file: {fileName}</p>
+              <p className="text-xs text-foreground-muted">{t('settings.selectedFile')} {fileName}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-foreground-muted">Import Mode</p>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-foreground-muted">{t('settings.importMode')}</p>
             <div className="flex gap-2">
               <Button
                 type="button"
                 variant={mode === 'merge' ? 'primary' : 'secondary'}
                 onClick={() => setMode('merge')}
               >
-                Merge
+                {t('settings.merge')}
               </Button>
               <Button
                 type="button"
                 variant={mode === 'replace' ? 'danger' : 'secondary'}
                 onClick={() => setMode('replace')}
               >
-                Replace
+                {t('settings.replace')}
               </Button>
             </div>
             {mode === 'replace' && (
               <div className="flex items-center gap-2 text-error text-sm">
                 <AlertTriangle size={16} />
-                Replace mode overwrites your current configuration.
+                {t('settings.replaceWarning')}
               </div>
             )}
           </div>
@@ -186,7 +217,7 @@ export const Settings: React.FC = () => {
               isLoading={isPreviewing}
             >
               <Upload size={18} />
-              Preview Import
+              {t('settings.previewImport')}
             </Button>
             <Button
               type="button"
@@ -194,7 +225,7 @@ export const Settings: React.FC = () => {
               disabled={!fileContent.trim() || !preview?.success}
               isLoading={isApplying}
             >
-              Apply Import
+              {t('settings.applyImport')}
             </Button>
           </div>
 
@@ -213,14 +244,14 @@ export const Settings: React.FC = () => {
 
           {preview && (
             <div className="p-4 rounded-xl border border-border bg-muted space-y-3">
-              <h3 className="font-bold text-foreground">Import Summary</h3>
+              <h3 className="font-bold text-foreground">{t('settings.importSummary')}</h3>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
-                <Badge variant="secondary">Created: {preview.summary.created}</Badge>
-                <Badge variant="secondary">Updated: {preview.summary.updated}</Badge>
-                <Badge variant="secondary">Skipped: {preview.summary.skipped}</Badge>
-                <Badge variant="secondary">Removed: {preview.summary.removed}</Badge>
+                <Badge variant="secondary">{t('settings.created')}: {preview.summary.created}</Badge>
+                <Badge variant="secondary">{t('settings.updated')}: {preview.summary.updated}</Badge>
+                <Badge variant="secondary">{t('settings.skipped')}: {preview.summary.skipped}</Badge>
+                <Badge variant="secondary">{t('settings.removed')}: {preview.summary.removed}</Badge>
                 <Badge variant={preview.summary.errors > 0 ? 'danger' : 'success'}>
-                  Errors: {preview.summary.errors}
+                  {t('settings.errors')}: {preview.summary.errors}
                 </Badge>
               </div>
               {preview.messages.length > 0 && (
@@ -237,18 +268,18 @@ export const Settings: React.FC = () => {
         <Card className="p-6 space-y-4">
           <div className="flex items-center gap-2">
             <Database size={20} className="text-primary" />
-            <h2 className="text-xl font-bold text-foreground">Database</h2>
+            <h2 className="text-xl font-bold text-foreground">{t('settings.database')}</h2>
           </div>
           <div className="space-y-2">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-foreground-muted">Path</p>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-foreground-muted">{t('settings.path')}</p>
             <p className="text-xs font-mono break-all text-foreground">
               {stats?.dbPath || 'Unavailable'}
             </p>
           </div>
           <div className="space-y-2">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-foreground-muted">Status</p>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-foreground-muted">{t('settings.status')}</p>
             <Badge variant={stats?.dbPath ? 'success' : 'secondary'}>
-              {stats?.dbPath ? 'Connected' : 'Unknown'}
+              {stats?.dbPath ? t('settings.connected') : t('settings.unknown')}
             </Badge>
           </div>
         </Card>

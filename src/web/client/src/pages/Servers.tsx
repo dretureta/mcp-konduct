@@ -11,11 +11,13 @@ import { Loading } from '../components/common/Loading.tsx';
 import { EmptyState } from '../components/common/EmptyState.tsx';
 import { Tooltip } from '../components/common/Tooltip.tsx';
 import { serverApi } from '../utils/api';
+import { useI18n } from '../i18n';
 
 export const Servers: React.FC = () => {
   const { 
     filteredServers: servers, isLoading, toggleServer, deleteServer, discoverTools, addServer, updateServer, refreshData, discoveringServerId
   } = useAppContext();
+  const { t } = useI18n();
   
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingServer, setEditingServer] = useState<Server | null>(null);
@@ -26,11 +28,11 @@ export const Servers: React.FC = () => {
   const [isImporting, setIsImporting] = useState(false);
 
   if (isLoading && servers.length === 0) {
-    return <Loading label="Loading servers..." />;
+    return <Loading label={t('servers.loading')} />;
   }
 
   const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this server?')) {
+    if (window.confirm(t('servers.confirmDelete'))) {
       deleteServer(id);
     }
   };
@@ -77,8 +79,8 @@ export const Servers: React.FC = () => {
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black tracking-tight text-foreground">Servers</h1>
-          <p className="font-medium text-foreground-muted">Manage and configure your MCP servers</p>
+          <h1 className="text-4xl font-black tracking-tight text-foreground">{t('servers.title')}</h1>
+          <p className="font-medium text-foreground-muted">{t('servers.manageServers')}</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
           <Button
@@ -87,14 +89,14 @@ export const Servers: React.FC = () => {
             className="w-full md:w-auto"
           >
             <FileJson size={20} />
-            <span>Import JSON</span>
+            <span>{t('servers.importJson')}</span>
           </Button>
           <Button 
             onClick={() => setIsAddModalOpen(true)}
             className="w-full md:w-auto"
           >
             <Plus size={20} />
-            <span>Add Server</span>
+            <span>{t('servers.addServer')}</span>
           </Button>
         </div>
       </div>
@@ -161,7 +163,7 @@ export const Servers: React.FC = () => {
               onClick={() => setIsImportModalOpen(false)}
               disabled={isImporting}
             >
-              Close
+              {t('common.close')}
             </Button>
             <Button onClick={handleImportJson} isLoading={isImporting}>
               Import Servers
@@ -173,7 +175,7 @@ export const Servers: React.FC = () => {
       <Modal 
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
-        title="Add New MCP Server"
+        title={t('serverForm.title.add')}
       >
         <ServerForm 
           onSubmit={async (data) => {
@@ -187,7 +189,7 @@ export const Servers: React.FC = () => {
       <Modal 
         isOpen={!!editingServer} 
         onClose={() => setEditingServer(null)} 
-        title={`Edit ${editingServer?.name}`}
+        title={`${t('serverForm.title.edit')} ${editingServer?.name}`}
       >
         {editingServer && (
           <ServerForm 
@@ -204,12 +206,12 @@ export const Servers: React.FC = () => {
       {servers.length === 0 ? (
         <EmptyState 
           icon={ServerIcon}
-          title="No servers yet"
-          description="Add your first MCP server to start aggregating tools and capabilities across your network."
+          title={t('servers.noServersYet')}
+          description={t('servers.addFirst')}
           action={
             <Button onClick={() => setIsAddModalOpen(true)}>
               <Plus size={20} />
-              Add Your First Server
+              {t('servers.addYourFirst')}
             </Button>
           }
         />
@@ -240,6 +242,8 @@ const ServerCard: React.FC<{
   onEdit: () => void;
   isDiscovering: boolean;
 }> = ({ server, onToggle, onDelete, onDiscover, onEdit, isDiscovering }) => {
+  const { t } = useI18n();
+  
   return (
     <Card hover className="group h-full flex flex-col">
       <div className="p-6 flex-1 space-y-4">
@@ -250,7 +254,7 @@ const ServerCard: React.FC<{
             <ServerIcon size={24} />
           </div>
           <div className="flex items-center gap-1">
-            <Tooltip content={isDiscovering ? "Discovering..." : "Discover Tools"}>
+            <Tooltip content={isDiscovering ? t('servers.discovering') : t('servers.discoverTools')}>
               <Button 
                 variant="ghost" 
                 size="icon"
@@ -261,7 +265,7 @@ const ServerCard: React.FC<{
                 <RefreshCcw size={18} className={isDiscovering ? "animate-spin" : ""} />
               </Button>
             </Tooltip>
-            <Tooltip content="Settings">
+            <Tooltip content={t('servers.settings')}>
               <Button 
                 variant="ghost" 
                 size="icon"
@@ -271,7 +275,7 @@ const ServerCard: React.FC<{
                 <Settings2 size={18} />
               </Button>
             </Tooltip>
-            <Tooltip content="Delete">
+            <Tooltip content={t('servers.deleteServer')}>
               <Button 
                 variant="ghost" 
                 size="icon"
@@ -332,10 +336,10 @@ const ServerCard: React.FC<{
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${server.enabled ? 'bg-success animate-pulse' : 'bg-muted'}`} />
           <span className="text-xs font-bold uppercase tracking-wider text-foreground-muted">
-            {server.enabled ? 'Enabled' : 'Disabled'}
+            {server.enabled ? t('servers.enabled') : t('servers.disabled')}
           </span>
         </div>
-        <Tooltip content={server.enabled ? 'Disable Server' : 'Enable Server'}>
+        <Tooltip content={server.enabled ? t('servers.disableServer') : t('servers.enableServer')}>
           <button
             onClick={onToggle}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${

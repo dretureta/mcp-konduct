@@ -3,18 +3,19 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Server, Wrench, Briefcase, Terminal, Settings, ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { useI18n } from '../../i18n';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-  { icon: Server, label: 'Servers', path: '/servers' },
-  { icon: Wrench, label: 'Tools', path: '/tools' },
-  { icon: Briefcase, label: 'Projects', path: '/projects' },
-  { icon: Terminal, label: 'Logs', path: '/logs' },
-  { icon: Settings, label: 'Settings', path: '/settings' },
+  { icon: LayoutDashboard, labelKey: 'nav.dashboard', path: '/' },
+  { icon: Server, labelKey: 'nav.servers', path: '/servers' },
+  { icon: Wrench, labelKey: 'nav.tools', path: '/tools' },
+  { icon: Briefcase, labelKey: 'nav.projects', path: '/projects' },
+  { icon: Terminal, labelKey: 'nav.logs', path: '/logs' },
+  { icon: Settings, labelKey: 'nav.settings', path: '/settings' },
 ];
 
 interface SidebarContextType {
@@ -46,6 +47,7 @@ export const useSidebar = () => {
 export const Sidebar: React.FC = () => {
   const { isCollapsed, setIsCollapsed, isOpen, setIsOpen } = useSidebar();
   const location = useLocation();
+  const { t } = useI18n();
 
   // Close sidebar on mobile when route changes
   useEffect(() => {
@@ -112,7 +114,7 @@ export const Sidebar: React.FC = () => {
                 }
               >
                 <item.icon size={20} className="shrink-0" />
-                {(!isCollapsed || isOpen) && <span className="font-medium">{item.label}</span>}
+                {(!isCollapsed || isOpen) && <span className="font-medium">{t(item.labelKey)}</span>}
               </NavLink>
             ))}
           </nav>
