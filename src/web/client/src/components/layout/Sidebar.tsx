@@ -83,16 +83,13 @@ export const Sidebar: React.FC = () => {
         <div className="flex flex-col h-full">
           {/* Logo Section */}
           <div className="flex items-center gap-3 p-6">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-border bg-background-subtle p-2 shadow-soft">
-              <img src="/logos/ceibal.svg" alt="Ceibal" className="h-5 w-auto" />
-            </div>
             {(!isCollapsed || isOpen) && (
               <div className="min-w-0">
                 <span className="block truncate text-lg font-bold tracking-tight text-foreground">
                   konduct
                 </span>
                 <span className="block text-[10px] font-black uppercase tracking-[0.18em] text-foreground-muted">
-                  Ceibal UI
+                  MCP Router
                 </span>
               </div>
             )}
