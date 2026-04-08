@@ -160,17 +160,6 @@ export const Header: React.FC = () => {
           )}
         </button>
 
-        <div className="mx-2 h-8 w-px bg-border"></div>
-
-        {/* Add Server Button */}
-        <button 
-          onClick={() => navigate('/servers')}
-          className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-soft transition-all active:scale-95 hover:bg-primary-dark hover:shadow-glow"
-        >
-          <Plus size={18} />
-          <span>{t('servers.addServer')}</span>
-        </button>
-
         {/* Local mode: no user profile needed */}
       </div>
     </header>
