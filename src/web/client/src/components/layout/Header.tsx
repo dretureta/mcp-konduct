@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sun, Moon, Plus, Bell, Search, Globe } from 'lucide-react';
+import { Sun, Moon, Bell, Search, Globe } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
 import { useI18n } from '../../i18n';
