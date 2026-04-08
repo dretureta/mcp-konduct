@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Server, CreateServerRequest, TransportType } from '../../types';
+import { useI18n } from '../../i18n';
 
 interface ServerFormProps {
   initialData?: Server;
@@ -9,6 +10,7 @@ interface ServerFormProps {
 }
 
 export const ServerForm: React.FC<ServerFormProps> = ({ initialData, onSubmit, onCancel, isLoading }) => {
+  const { t } = useI18n();
   const [formData, setFormData] = useState<CreateServerRequest>({
     name: initialData?.name || '',
     transport: initialData?.transport || 'stdio',
@@ -49,26 +51,26 @@ export const ServerForm: React.FC<ServerFormProps> = ({ initialData, onSubmit, o
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Server Name</label>
+          <label className="text-sm font-bold text-foreground">{t('serverForm.name')}</label>
           <input
             required
             type="text"
-            className="w-full bg-slate-100 dark:bg-slate-800 border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all"
-            placeholder="e.g., File System"
+            className="w-full bg-muted border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all"
+            placeholder={t('serverForm.namePlaceholder')}
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Transport</label>
+          <label className="text-sm font-bold text-foreground">{t('serverForm.transport')}</label>
           <select
-            className="w-full bg-slate-100 dark:bg-slate-800 border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all"
+            className="w-full bg-muted border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all"
             value={formData.transport}
             onChange={(e) => setFormData({ ...formData, transport: e.target.value as TransportType })}
           >
-            <option value="stdio">Standard I/O (stdio)</option>
-            <option value="sse">Server-Sent Events (SSE)</option>
-            <option value="streamable-http">Streamable HTTP</option>
+            <option value="stdio">{t('servers.standardIO')}</option>
+            <option value="sse">{t('servers.serverSentinel')}</option>
+            <option value="streamable-http">{t('servers.streamableHttp')}</option>
           </select>
         </div>
       </div>
@@ -76,33 +78,33 @@ export const ServerForm: React.FC<ServerFormProps> = ({ initialData, onSubmit, o
       {formData.transport === 'stdio' ? (
         <>
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Command</label>
+            <label className="text-sm font-bold text-foreground">{t('serverForm.command')}</label>
             <input
               required
               type="text"
-              className="w-full bg-slate-100 dark:bg-slate-800 border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono"
-              placeholder="e.g., npx"
+              className="w-full bg-muted border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono"
+              placeholder={t('serverForm.namePlaceholder')}
               value={formData.command}
               onChange={(e) => setFormData({ ...formData, command: e.target.value })}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Arguments (comma separated)</label>
+            <label className="text-sm font-bold text-foreground">{t('serverForm.args')}</label>
             <textarea
-              className="w-full bg-slate-100 dark:bg-slate-800 border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono"
-              placeholder="e.g., -y, @modelcontextprotocol/server-filesystem, /tmp"
+              className="w-full bg-muted border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono"
+              placeholder={t('serverForm.argsPlaceholder')}
               rows={3}
               value={argsString}
               onChange={(e) => setArgsString(e.target.value)}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">
-              KEY=VALUE Environment Variables <span className="font-normal text-slate-400">(one per line)</span>
+            <label className="text-sm font-bold text-foreground">
+              {t('serverForm.envDescription')} <span className="font-normal text-foreground-muted">{t('serverForm.envLineDescription')}</span>
             </label>
             <textarea
-              className="w-full bg-slate-100 dark:bg-slate-800 border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono"
-              placeholder={"API_KEY=your_key\nANOTHER_VAR=value"}
+              className="w-full bg-muted border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono"
+              placeholder={t('serverForm.envPlaceholder')}
               rows={3}
               value={envString}
               onChange={(e) => setEnvString(e.target.value)}
@@ -112,23 +114,23 @@ export const ServerForm: React.FC<ServerFormProps> = ({ initialData, onSubmit, o
       ) : (
         <>
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">URL</label>
+            <label className="text-sm font-bold text-foreground">URL</label>
             <input
               required
               type="url"
-              className="w-full bg-slate-100 dark:bg-slate-800 border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono"
-              placeholder="http://localhost:3000"
+              className="w-full bg-muted border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono"
+              placeholder={t('serverForm.urlPlaceholder')}
               value={formData.url}
               onChange={(e) => setFormData({ ...formData, url: e.target.value })}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">
-              KEY=VALUE Environment Variables <span className="font-normal text-slate-400">(one per line)</span>
+            <label className="text-sm font-bold text-foreground">
+              {t('serverForm.envDescription')} <span className="font-normal text-foreground-muted">{t('serverForm.envLineDescription')}</span>
             </label>
             <textarea
-              className="w-full bg-slate-100 dark:bg-slate-800 border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono"
-              placeholder={"API_KEY=your_key\nANOTHER_VAR=value"}
+              className="w-full bg-muted border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono"
+              placeholder={t('serverForm.envPlaceholder')}
               rows={3}
               value={envString}
               onChange={(e) => setEnvString(e.target.value)}
@@ -137,20 +139,20 @@ export const ServerForm: React.FC<ServerFormProps> = ({ initialData, onSubmit, o
         </>
       )}
 
-      <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+      <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
         <button
           type="button"
           onClick={onCancel}
-          className="px-6 py-2.5 rounded-xl font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+          className="px-6 py-2.5 rounded-xl font-bold text-foreground-muted hover:bg-muted transition-all"
         >
-          Cancel
+          {t('serverForm.cancel')}
         </button>
         <button
           type="submit"
           disabled={isLoading}
           className="bg-primary hover:bg-primary-dark text-white px-8 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 active:scale-95 disabled:opacity-50"
         >
-          {isLoading ? 'Saving...' : initialData ? 'Update Server' : 'Create Server'}
+          {isLoading ? t('serverForm.saving') : initialData ? t('serverForm.updateServer') : t('serverForm.createServer')}
         </button>
       </div>
     </form>

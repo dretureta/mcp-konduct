@@ -19,41 +19,114 @@
 
 @layer base {
   :root {
-    --primary: #6366f1;
-    --accent: #ec4899;
-    --background: #f8fafc;
-    --surface: #ffffff;
-    --text: #0f172a;
+    --background-light: oklch(0.9911 0 0);
+    --background-dark: oklch(0.211 0 0);
+    --background-subtle: oklch(0.9612 0 0);
+    --background: var(--background-light);
+
+    --surface-light: oklch(1 0 0);
+    --surface-dark: oklch(0.261 0.02 260);
+    --surface-elevated: oklch(0.985 0 0);
+    --surface: var(--surface-light);
+
+    --foreground: oklch(0.211 0 0);
+    --foreground-inverted: oklch(0.9911 0 0);
+    --muted: oklch(0.9612 0 0);
+    --muted-foreground: oklch(0.5086 0.0025 17.24);
+    --border: oklch(0.8717 0.0093 258.34);
+    --border-strong: oklch(0.7137 0.0192 261.32);
+    --ring: color-mix(in oklab, var(--primary) 18%, transparent);
+
+    --primary-300: oklch(0.7665 0.0915 190.07);
+    --primary: oklch(0.5402 0.094264 187.155);
+    --primary-600: oklch(0.4501 0.0784 187.58);
+    --primary-dark: oklch(0.4501 0.0784 187.58);
+    --primary-foreground: oklch(1 0 0);
+
+    --secondary-300: oklch(0.6703 0.0815 240.91);
+    --secondary: oklch(0.4591 0.127661 249.3155);
+    --secondary-600: oklch(0.3931 0.1073 248.58);
+    --secondary-foreground: oklch(1 0 0);
+
+    --accent: oklch(0.5414 0.2124 2.61);
+    --accent-dark: oklch(0.4601 0.1793 2.1);
+    --accent-foreground: oklch(1 0 0);
+
+    --success: oklch(0.4243 0.117252 149.8526);
+    --success-soft: color-mix(in oklab, var(--success) 16%, white);
+    --success-border: color-mix(in oklab, var(--success) 34%, white);
+    --success-foreground: oklch(1 0 0);
+
+    --warning: oklch(0.7396 0.1656 65.25);
+    --warning-soft: color-mix(in oklab, var(--warning) 20%, white);
+    --warning-border: color-mix(in oklab, var(--warning) 35%, white);
+    --warning-foreground: oklch(0.211 0 0);
+
+    --error: oklch(0.5076 0.2023 29.03);
+    --error-soft: color-mix(in oklab, var(--error) 14%, white);
+    --error-border: color-mix(in oklab, var(--error) 30%, white);
+    --error-foreground: oklch(1 0 0);
+
+    --info: oklch(0.668 0.1446 236.44);
+    --info-soft: color-mix(in oklab, var(--info) 16%, white);
+    --info-border: color-mix(in oklab, var(--info) 32%, white);
+    --info-foreground: oklch(1 0 0);
+
+    --radius-lg: 0.5rem;
+    --radius-xl: 0.875rem;
+    --radius-2xl: 1.25rem;
+
+    --shadow-soft: 0 1px 3px 0 rgb(15 23 42 / 0.08), 0 1px 2px -1px rgb(15 23 42 / 0.08);
+    --shadow-medium: 0 14px 28px -18px rgb(15 23 42 / 0.35);
+    --shadow-glow: 0 16px 40px -20px color-mix(in oklab, var(--primary) 45%, transparent);
   }
 
   html.dark {
-    --primary: #6366f1;
-    --accent: #ec4899;
-    --background: #020617;
-    --surface: #0f172a;
-    --text: #f8fafc;
+    --background: oklch(0.18 0 0);
+    --background-light: oklch(0.18 0 0);
+    --background-subtle: oklch(0.249 0.008 265);
+    --surface: oklch(0.249 0.012 265);
+    --surface-light: oklch(0.249 0.012 265);
+    --surface-elevated: oklch(0.31 0.015 265);
+    --foreground: oklch(0.975 0 0);
+    --foreground-inverted: oklch(0.18 0 0);
+    --muted: oklch(0.285 0.0188 260);
+    --muted-foreground: oklch(0.82 0 0);
+    --border: oklch(0.36 0.0145 265);
+    --border-strong: oklch(0.44 0.022 265);
+    --primary: oklch(0.62 0.092 187.155);
+    --primary-dark: oklch(0.52 0.1 187.155);
+    --ring: color-mix(in oklab, var(--primary) 28%, transparent);
+    --success-soft: color-mix(in oklab, var(--success) 22%, transparent);
+    --warning-soft: color-mix(in oklab, var(--warning) 22%, transparent);
+    --error-soft: color-mix(in oklab, var(--error) 22%, transparent);
+    --info-soft: color-mix(in oklab, var(--info) 22%, transparent);
   }
 
   body {
-    @apply bg-background-light text-slate-900 dark:bg-background-dark dark:text-slate-100 antialiased;
-    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', 'Segoe UI', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  * {
+    @apply border-border;
   }
 }
 
 @layer components {
   .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+    @apply px-4 py-2 rounded-xl font-medium transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
   }
   
   .btn-primary {
-    @apply bg-primary text-white hover:bg-primary-dark shadow-sm hover:shadow-md;
+    @apply bg-primary text-primary-foreground hover:bg-primary-dark shadow-soft hover:shadow-glow;
   }
 
   .btn-secondary {
-    @apply bg-surface-light dark:bg-surface-dark border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200;
+    @apply bg-surface text-foreground border border-border hover:bg-background-subtle;
   }
 
   .card {
-    @apply bg-surface-light dark:bg-surface-dark border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm;
+    @apply bg-surface border border-border rounded-2xl overflow-hidden shadow-soft;
   }
 }

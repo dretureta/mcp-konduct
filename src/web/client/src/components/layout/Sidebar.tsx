@@ -3,18 +3,19 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Server, Wrench, Briefcase, Terminal, Settings, ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { useI18n } from '../../i18n';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-  { icon: Server, label: 'Servers', path: '/servers' },
-  { icon: Wrench, label: 'Tools', path: '/tools' },
-  { icon: Briefcase, label: 'Projects', path: '/projects' },
-  { icon: Terminal, label: 'Logs', path: '/logs' },
-  { icon: Settings, label: 'Settings', path: '/settings' },
+  { icon: LayoutDashboard, labelKey: 'nav.dashboard', path: '/' },
+  { icon: Server, labelKey: 'nav.servers', path: '/servers' },
+  { icon: Wrench, labelKey: 'nav.tools', path: '/tools' },
+  { icon: Briefcase, labelKey: 'nav.projects', path: '/projects' },
+  { icon: Terminal, labelKey: 'nav.logs', path: '/logs' },
+  { icon: Settings, labelKey: 'nav.settings', path: '/settings' },
 ];
 
 interface SidebarContextType {
@@ -46,6 +47,7 @@ export const useSidebar = () => {
 export const Sidebar: React.FC = () => {
   const { isCollapsed, setIsCollapsed, isOpen, setIsOpen } = useSidebar();
   const location = useLocation();
+  const { t } = useI18n();
 
   // Close sidebar on mobile when route changes
   useEffect(() => {
@@ -57,7 +59,7 @@ export const Sidebar: React.FC = () => {
       {/* Mobile Toggle */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 left-4 z-[60] p-2 bg-primary text-white rounded-lg shadow-lg md:hidden"
+        className="fixed left-4 top-4 z-[60] rounded-xl bg-primary p-2 text-primary-foreground shadow-soft md:hidden"
       >
         {isOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
@@ -65,14 +67,14 @@ export const Sidebar: React.FC = () => {
       {/* Mobile Backdrop */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm"
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
 
       <aside
         className={cn(
-          "fixed left-0 top-0 h-full bg-surface-light dark:bg-surface-dark border-r border-slate-200 dark:border-slate-800 transition-all duration-300 z-50",
+          "fixed left-0 top-0 z-50 h-full border-r border-border bg-surface transition-all duration-300",
           "md:translate-x-0", // Visible on desktop
           isOpen ? "translate-x-0 w-64" : "-translate-x-full md:w-64", // Mobile state
           !isOpen && isCollapsed ? "md:w-20" : "md:w-64" // Desktop collapsed state
@@ -80,14 +82,16 @@ export const Sidebar: React.FC = () => {
       >
         <div className="flex flex-col h-full">
           {/* Logo Section */}
-          <div className="p-6 flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shrink-0">
-              <span className="text-white font-bold text-xl">K</span>
-            </div>
+          <div className="flex items-center gap-3 p-6">
             {(!isCollapsed || isOpen) && (
-              <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white truncate">
-                konduct
-              </span>
+              <div className="min-w-0">
+                <span className="block truncate text-lg font-bold tracking-tight text-foreground">
+                  konduct
+                </span>
+                <span className="block text-[10px] font-black uppercase tracking-[0.18em] text-foreground-muted">
+                  MCP Router
+                </span>
+              </div>
             )}
           </div>
 
@@ -99,24 +103,24 @@ export const Sidebar: React.FC = () => {
                 to={item.path}
                 className={({ isActive }) =>
                   cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors group",
+                    "group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors",
                     isActive
-                      ? "bg-primary text-white shadow-sm"
-                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary dark:hover:text-primary"
+                      ? "bg-primary text-primary-foreground shadow-soft"
+                      : "text-foreground-muted hover:bg-background-subtle hover:text-primary"
                   )
                 }
               >
                 <item.icon size={20} className="shrink-0" />
-                {(!isCollapsed || isOpen) && <span className="font-medium">{item.label}</span>}
+                {(!isCollapsed || isOpen) && <span className="font-medium">{t(item.labelKey)}</span>}
               </NavLink>
             ))}
           </nav>
 
           {/* Footer/Collapse (Desktop Only) */}
-          <div className="p-4 border-t border-slate-200 dark:border-slate-800 hidden md:block">
+          <div className="hidden border-t border-border p-4 md:block">
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="w-full flex items-center justify-center p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 transition-colors"
+              className="flex w-full items-center justify-center rounded-xl p-2 text-foreground-muted transition-colors hover:bg-background-subtle"
             >
               {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
             </button>

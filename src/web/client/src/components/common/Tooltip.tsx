@@ -29,10 +29,10 @@ export const Tooltip: React.FC<TooltipProps> = ({
   };
 
   const arrows = {
-    top: 'top-full left-1/2 -translate-x-1/2 border-t-slate-900',
-    bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-slate-900',
-    left: 'left-full top-1/2 -translate-y-1/2 border-l-slate-900',
-    right: 'right-full top-1/2 -translate-y-1/2 border-r-slate-900',
+    top: 'top-full left-1/2 -translate-x-1/2 border-t-foreground',
+    bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-foreground',
+    left: 'left-full top-1/2 -translate-y-1/2 border-l-foreground',
+    right: 'right-full top-1/2 -translate-y-1/2 border-r-foreground',
   };
 
   return (
@@ -45,7 +45,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
       {isVisible && (
         <div
           className={cn(
-            'absolute z-50 px-3 py-1.5 text-xs font-bold text-white bg-slate-900 dark:bg-slate-800 rounded-lg whitespace-nowrap shadow-xl animate-in fade-in zoom-in-95 duration-200',
+            'absolute z-50 whitespace-nowrap rounded-xl bg-foreground px-3 py-1.5 text-xs font-bold text-foreground-inverted shadow-medium animate-in fade-in zoom-in-95 duration-200',
             positions[position],
             className
           )}

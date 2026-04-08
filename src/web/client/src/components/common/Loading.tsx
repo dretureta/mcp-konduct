@@ -21,7 +21,7 @@ export const Loading: React.FC<LoadingProps> = ({
 }) => {
   const sizes = {
     sm: 'w-4 h-4 border-2',
-    md: 'w-8 h-8 border-3',
+    md: 'w-8 h-8 border-[3px]',
     lg: 'w-12 h-12 border-4',
     xl: 'w-16 h-16 border-4',
   };
@@ -36,14 +36,14 @@ export const Loading: React.FC<LoadingProps> = ({
         )}
       />
       {label && (
-        <p className="text-sm font-bold text-slate-500 animate-pulse">{label}</p>
-      )}
-    </div>
-  );
+          <p className="animate-pulse text-sm font-bold text-foreground-muted">{label}</p>
+        )}
+      </div>
+    );
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-surface/80 backdrop-blur-sm animate-in fade-in duration-300">
         {spinner}
       </div>
     );

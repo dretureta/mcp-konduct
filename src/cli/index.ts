@@ -648,30 +648,89 @@ program
         details: `${enabledTools.length}/${tools.length} enabled`
       });
 
-      let outdatedRaw = '{}';
+      // Run npm outdated in the project root so it finds the right package.json
+      const projectRoot = process.cwd();
+      let outdatedRaw = '';
+      let npmFailed = false;
+      let npmErrorMsg = '';
+
       try {
         const result = spawnSync('npm', ['outdated', '--json'], {
+          cwd: projectRoot,
           stdio: ['ignore', 'pipe', 'pipe'],
-          timeout: 5000,
+          timeout: 10000,
           encoding: 'utf-8'
         });
-        outdatedRaw = result.stdout || '{}';
-      } catch {
-        outdatedRaw = '{}';
+
+        // npm exits non-zero when outdated packages exist — that's not an error
+        if (result.status !== 0 && result.status !== null) {
+          // Capture stderr for diagnostics but don't treat as failure
+          npmErrorMsg = (result.stderr || '').trim();
+          if (npmErrorMsg && npmErrorMsg !== '') {
+            // npm prints warnings/errors to stderr; still use stdout if present
+          }
+        }
+
+        outdatedRaw = result.stdout || '';
+      } catch (err) {
+        npmFailed = true;
+        npmErrorMsg = err instanceof Error ? err.message : String(err);
       }
 
-      let outdatedCount = 0;
-      try {
-        const outdated = JSON.parse(outdatedRaw || '{}') as Record<string, unknown>;
-        outdatedCount = Object.keys(outdated).length;
-      } catch {
-        outdatedCount = -1;
+      interface NpmOutdatedEntry {
+        current: string;
+        wanted: string;
+        latest: string;
+        dependent?: string;
+        location?: string;
+      }
+
+      let semverOutdated: string[] = [];
+      let latestOutdated: string[] = [];
+      let parseError = false;
+
+      if (!npmFailed && outdatedRaw.trim() !== '') {
+        try {
+          const outdated = JSON.parse(outdatedRaw) as Record<string, NpmOutdatedEntry>;
+          for (const [pkg, info] of Object.entries(outdated)) {
+            if (info.wanted !== info.current && info.latest !== info.wanted) {
+              // wanted > current, but latest also > wanted — both updates available
+              semverOutdated.push(pkg);
+            } else if (info.wanted === info.current && info.latest !== info.current) {
+              // wanted == current (nothing within range), but latest is newer — outside range
+              latestOutdated.push(pkg);
+            } else if (info.wanted !== info.current) {
+              // wanted > current, latest == wanted — only semver update
+              semverOutdated.push(pkg);
+            }
+          }
+        } catch {
+          parseError = true;
+        }
+      }
+
+      let depDetails: string;
+      if (npmFailed) {
+        depDetails = `npm command failed: ${npmErrorMsg}`;
+      } else if (parseError) {
+        depDetails = 'could not parse npm outdated output';
+      } else if (semverOutdated.length === 0 && latestOutdated.length === 0) {
+        depDetails = 'all up to date';
+      } else {
+        const parts: string[] = [];
+        if (semverOutdated.length > 0) {
+          parts.push(`${semverOutdated.length} patch/minor`);
+        }
+        if (latestOutdated.length > 0) {
+          parts.push(`${latestOutdated.length} major`);
+        }
+        depDetails = parts.join(', ') + ' | ' + [...semverOutdated, ...latestOutdated].join(', ');
       }
 
       checks.push({
         name: 'Dependencies',
-        ok: outdatedCount === 0,
-        details: outdatedCount < 0 ? 'could not parse npm outdated output' : `${outdatedCount} outdated`
+        ok: !npmFailed && !parseError && semverOutdated.length === 0 && latestOutdated.length === 0,
+        details: depDetails
       });
 
       const nodeMajor = parseInt(process.versions.node.split('.')[0], 10);

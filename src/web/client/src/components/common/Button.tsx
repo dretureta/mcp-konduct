@@ -22,11 +22,11 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const variants = {
-    primary: 'bg-primary hover:bg-primary-dark text-white shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30',
-    secondary: 'bg-surface-light dark:bg-surface-dark border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200',
-    danger: 'bg-rose-500 hover:bg-rose-600 text-white shadow-lg shadow-rose-500/20 hover:shadow-xl hover:shadow-rose-500/30',
-    ghost: 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400',
-    outline: 'border-2 border-primary text-primary hover:bg-primary hover:text-white',
+    primary: 'bg-primary hover:bg-primary-dark text-primary-foreground shadow-soft hover:shadow-glow',
+    secondary: 'bg-surface border border-border hover:bg-background-subtle text-foreground',
+    danger: 'bg-error hover:bg-error text-error-foreground shadow-soft hover:shadow-medium',
+    ghost: 'hover:bg-background-subtle text-foreground-muted',
+    outline: 'border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground',
   };
 
   const sizes = {

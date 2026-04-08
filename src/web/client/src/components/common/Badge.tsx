@@ -19,13 +19,13 @@ export const Badge: React.FC<BadgeProps> = ({
   ...props
 }) => {
   const variants = {
-    primary: 'bg-primary/10 text-primary border-primary/20 dark:bg-primary/20 dark:text-primary-light',
-    secondary: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
-    success: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800/50',
-    danger: 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800/50',
-    warning: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800/50',
-    info: 'bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-400 dark:border-sky-800/50',
-    outline: 'bg-transparent border-2 border-slate-200 text-slate-600 dark:border-slate-800 dark:text-slate-400',
+    primary: 'bg-primary/12 text-primary border-primary/20',
+    secondary: 'bg-muted text-foreground border-border',
+    success: 'bg-success-soft text-success border-success-border',
+    danger: 'bg-danger-soft text-danger border-danger-border',
+    warning: 'bg-warning-soft text-warning border-warning-border',
+    info: 'bg-info-soft text-info border-info-border',
+    outline: 'bg-transparent border-2 border-border text-foreground-muted',
   };
 
   const sizes = {

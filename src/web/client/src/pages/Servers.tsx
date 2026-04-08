@@ -11,11 +11,13 @@ import { Loading } from '../components/common/Loading.tsx';
 import { EmptyState } from '../components/common/EmptyState.tsx';
 import { Tooltip } from '../components/common/Tooltip.tsx';
 import { serverApi } from '../utils/api';
+import { useI18n } from '../i18n';
 
 export const Servers: React.FC = () => {
   const { 
     filteredServers: servers, isLoading, toggleServer, deleteServer, discoverTools, addServer, updateServer, refreshData, discoveringServerId
   } = useAppContext();
+  const { t } = useI18n();
   
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingServer, setEditingServer] = useState<Server | null>(null);
@@ -26,11 +28,11 @@ export const Servers: React.FC = () => {
   const [isImporting, setIsImporting] = useState(false);
 
   if (isLoading && servers.length === 0) {
-    return <Loading label="Loading servers..." />;
+    return <Loading label={t('servers.loading')} />;
   }
 
   const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this server?')) {
+    if (window.confirm(t('servers.confirmDelete'))) {
       deleteServer(id);
     }
   };
@@ -77,8 +79,8 @@ export const Servers: React.FC = () => {
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Servers</h1>
-          <p className="text-slate-500 dark:text-slate-400 font-medium">Manage and configure your MCP servers</p>
+          <h1 className="text-4xl font-black tracking-tight text-foreground">{t('servers.title')}</h1>
+          <p className="font-medium text-foreground-muted">{t('servers.manageServers')}</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
           <Button
@@ -87,14 +89,14 @@ export const Servers: React.FC = () => {
             className="w-full md:w-auto"
           >
             <FileJson size={20} />
-            <span>Import JSON</span>
+            <span>{t('servers.importJson')}</span>
           </Button>
           <Button 
             onClick={() => setIsAddModalOpen(true)}
             className="w-full md:w-auto"
           >
             <Plus size={20} />
-            <span>Add Server</span>
+            <span>{t('servers.addServer')}</span>
           </Button>
         </div>
       </div>
@@ -110,10 +112,10 @@ export const Servers: React.FC = () => {
       >
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">JSON Payload</label>
+            <label className="text-sm font-bold text-foreground">JSON Payload</label>
             <textarea
               rows={10}
-              className="w-full bg-slate-100 dark:bg-slate-800 border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2.5 outline-none transition-all font-mono text-xs"
+              className="w-full rounded-xl border border-transparent bg-background-subtle px-4 py-2.5 font-mono text-xs text-foreground outline-none transition-all focus:border-primary focus:ring-4 focus:ring-ring"
               placeholder='{"mcpServers": {"brave-search": {"command": "docker", "args": ["run", "-i"]}}}'
               value={jsonInput}
               onChange={(e) => setJsonInput(e.target.value)}
@@ -121,22 +123,22 @@ export const Servers: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-sm font-bold cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-background-subtle px-4 py-2 text-sm font-bold text-foreground transition-colors hover:bg-muted">
               <Upload size={16} />
               Upload JSON file
               <input type="file" accept="application/json" className="hidden" onChange={handleImportFile} />
             </label>
-            <span className="text-xs text-slate-500">Supports OpenCode-style `mcpServers` format.</span>
+            <span className="text-xs text-foreground-muted">Supports OpenCode-style `mcpServers` format.</span>
           </div>
 
           {importError && (
-            <div className="text-sm text-rose-500 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-900 rounded-xl p-3">
+            <div className="rounded-xl border border-error-border bg-error-soft p-3 text-sm text-error">
               {importError}
             </div>
           )}
 
           {importResult && (
-            <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-y-2">
+            <div className="space-y-2 rounded-xl border border-border bg-background-subtle p-4">
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant="success">Created: {importResult.summary.created}</Badge>
                 <Badge variant="primary">Updated: {importResult.summary.updated}</Badge>
@@ -146,7 +148,7 @@ export const Servers: React.FC = () => {
                 </Badge>
               </div>
               {importResult.messages.length > 0 && (
-                <ul className="list-disc pl-5 text-xs text-slate-600 dark:text-slate-300 space-y-1">
+                <ul className="list-disc space-y-1 pl-5 text-xs text-foreground-muted">
                   {importResult.messages.map((message, idx) => (
                     <li key={`${idx}-${message}`}>{message}</li>
                   ))}
@@ -161,7 +163,7 @@ export const Servers: React.FC = () => {
               onClick={() => setIsImportModalOpen(false)}
               disabled={isImporting}
             >
-              Close
+              {t('common.close')}
             </Button>
             <Button onClick={handleImportJson} isLoading={isImporting}>
               Import Servers
@@ -173,7 +175,7 @@ export const Servers: React.FC = () => {
       <Modal 
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
-        title="Add New MCP Server"
+        title={t('serverForm.title.add')}
       >
         <ServerForm 
           onSubmit={async (data) => {
@@ -187,7 +189,7 @@ export const Servers: React.FC = () => {
       <Modal 
         isOpen={!!editingServer} 
         onClose={() => setEditingServer(null)} 
-        title={`Edit ${editingServer?.name}`}
+        title={`${t('serverForm.title.edit')} ${editingServer?.name}`}
       >
         {editingServer && (
           <ServerForm 
@@ -204,12 +206,12 @@ export const Servers: React.FC = () => {
       {servers.length === 0 ? (
         <EmptyState 
           icon={ServerIcon}
-          title="No servers yet"
-          description="Add your first MCP server to start aggregating tools and capabilities across your network."
+          title={t('servers.noServersYet')}
+          description={t('servers.addFirst')}
           action={
             <Button onClick={() => setIsAddModalOpen(true)}>
               <Plus size={20} />
-              Add Your First Server
+              {t('servers.addYourFirst')}
             </Button>
           }
         />
@@ -240,43 +242,45 @@ const ServerCard: React.FC<{
   onEdit: () => void;
   isDiscovering: boolean;
 }> = ({ server, onToggle, onDelete, onDiscover, onEdit, isDiscovering }) => {
+  const { t } = useI18n();
+  
   return (
     <Card hover className="group h-full flex flex-col">
       <div className="p-6 flex-1 space-y-4">
         <div className="flex items-start justify-between">
-          <div className={`p-3 rounded-xl transition-colors ${
-            server.enabled ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-400 dark:bg-slate-800'
+          <div className={`rounded-xl p-3 transition-colors ${
+            server.enabled ? 'bg-primary/12 text-primary' : 'bg-muted text-foreground-muted'
           }`}>
             <ServerIcon size={24} />
           </div>
           <div className="flex items-center gap-1">
-            <Tooltip content={isDiscovering ? "Discovering..." : "Discover Tools"}>
+            <Tooltip content={isDiscovering ? t('servers.discovering') : t('servers.discoverTools')}>
               <Button 
                 variant="ghost" 
                 size="icon"
                 onClick={onDiscover}
                 disabled={isDiscovering}
-                className={isDiscovering ? "text-primary animate-spin" : "text-slate-400 hover:text-primary"}
+                className={isDiscovering ? 'animate-spin text-primary' : 'text-foreground-muted hover:text-primary'}
               >
                 <RefreshCcw size={18} className={isDiscovering ? "animate-spin" : ""} />
               </Button>
             </Tooltip>
-            <Tooltip content="Settings">
+            <Tooltip content={t('servers.settings')}>
               <Button 
                 variant="ghost" 
                 size="icon"
                 onClick={onEdit}
-                className="text-slate-400 hover:text-primary"
+                className="text-foreground-muted hover:text-primary"
               >
                 <Settings2 size={18} />
               </Button>
             </Tooltip>
-            <Tooltip content="Delete">
+            <Tooltip content={t('servers.deleteServer')}>
               <Button 
                 variant="ghost" 
                 size="icon"
                 onClick={onDelete}
-                className="text-slate-400 hover:text-rose-500"
+                className="text-foreground-muted hover:text-error"
               >
                 <Trash2 size={18} />
               </Button>
@@ -285,42 +289,42 @@ const ServerCard: React.FC<{
         </div>
 
         <div>
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white truncate" title={server.name}>
+          <h3 className="truncate text-lg font-bold text-foreground" title={server.name}>
             {server.name}
           </h3>
           <div className="flex items-center gap-2 mt-1">
             <Badge variant="secondary">{server.transport}</Badge>
-            <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
-            <span className="font-mono text-[10px] text-slate-400 truncate">{server.id}</span>
+            <span className="h-1 w-1 rounded-full bg-border-strong" />
+            <span className="truncate font-mono text-[10px] text-foreground-muted">{server.id}</span>
           </div>
         </div>
 
         <div className="space-y-2">
           {server.url && (
-            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 px-3 py-2 rounded-lg text-[10px] font-mono text-slate-500 truncate group-hover:bg-slate-100 dark:group-hover:bg-slate-800 transition-colors">
+            <div className="flex items-center gap-2 rounded-lg bg-background-subtle px-3 py-2 font-mono text-[10px] text-foreground-muted transition-colors group-hover:bg-muted truncate">
               <ExternalLink size={12} className="shrink-0" />
               {server.url}
             </div>
           )}
           {server.command && (
-            <div className="bg-slate-50 dark:bg-slate-800/50 px-3 py-2 rounded-lg text-[10px] font-mono text-slate-500 truncate group-hover:bg-slate-100 dark:group-hover:bg-slate-800 transition-colors">
+            <div className="truncate rounded-lg bg-background-subtle px-3 py-2 font-mono text-[10px] text-foreground-muted transition-colors group-hover:bg-muted">
               <span className="text-primary font-bold mr-1">$</span> {server.command} {server.args?.join(' ')}
             </div>
           )}
           {server.env && Object.keys(server.env).length > 0 && (
-            <div className="bg-slate-50 dark:bg-slate-800/50 px-3 py-2 rounded-lg text-[10px] font-mono text-slate-500 group-hover:bg-slate-100 dark:group-hover:bg-slate-800 transition-colors">
-              <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="rounded-lg bg-background-subtle px-3 py-2 font-mono text-[10px] text-foreground-muted transition-colors group-hover:bg-muted">
+              <div className="flex flex-wrap items-center gap-1.5">
                 <span className="text-primary font-bold">ENV</span>
-                <span className="text-slate-400">({Object.keys(server.env).length})</span>
+                <span className="text-foreground-muted">({Object.keys(server.env).length})</span>
                 {Object.entries(server.env).slice(0, 3).map(([key, value]) => (
-                  <span key={key} className="inline-flex items-center gap-0.5 bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-600 dark:text-slate-300">
+                  <span key={key} className="inline-flex items-center gap-0.5 rounded bg-muted px-1.5 py-0.5 text-foreground">
                     <span className="font-semibold">{key}</span>
                     <span>=</span>
                     <span>{value.length > 4 ? '••••••' : '••'}</span>
                   </span>
                 ))}
                 {Object.keys(server.env).length > 3 && (
-                  <span className="text-slate-400">+{Object.keys(server.env).length - 3} more</span>
+                  <span className="text-foreground-muted">+{Object.keys(server.env).length - 3} more</span>
                 )}
               </div>
             </div>
@@ -328,18 +332,18 @@ const ServerCard: React.FC<{
         </div>
       </div>
 
-      <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between rounded-b-2xl">
+      <div className="px-6 py-4 bg-muted border-t border-border flex items-center justify-between rounded-b-2xl">
         <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${server.enabled ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300 dark:bg-slate-700'}`} />
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            {server.enabled ? 'Enabled' : 'Disabled'}
+          <div className={`w-2 h-2 rounded-full ${server.enabled ? 'bg-success animate-pulse' : 'bg-muted'}`} />
+          <span className="text-xs font-bold uppercase tracking-wider text-foreground-muted">
+            {server.enabled ? t('servers.enabled') : t('servers.disabled')}
           </span>
         </div>
-        <Tooltip content={server.enabled ? 'Disable Server' : 'Enable Server'}>
+        <Tooltip content={server.enabled ? t('servers.disableServer') : t('servers.enableServer')}>
           <button
             onClick={onToggle}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-              server.enabled ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'
+              server.enabled ? 'bg-primary' : 'bg-muted'
             }`}
           >
             <span
