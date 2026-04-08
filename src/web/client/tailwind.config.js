@@ -80,7 +80,7 @@ export default {
         muted: 'var(--muted)',
       },
       fontFamily: {
-        sans: ['ceibalMozaic', 'Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Noto Sans', 'sans-serif'],
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Noto Sans', 'sans-serif'],
         serif: ['Georgia', 'Cambria', "Times New Roman", 'Times', 'serif'],
       },
       borderRadius: {
